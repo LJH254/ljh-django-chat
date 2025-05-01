@@ -128,3 +128,19 @@ def modify_user_money(request):
         return JsonResponse({'status': True}, status=201)
     except Exception as e:
         return JsonResponse({'status': False,'error': str(e)}, status=500)
+
+@require_http_methods(["POST"])
+def release_envelope(request):
+    try:
+        # 解析前端发送的 JSON 数据
+        data = json.loads(request.body)
+
+        p_env = PublicEnvelope.objects.filter(id=data['id'])
+        prev_people = p_env.first().received_total_people
+        p_env.update(received_total_people=prev_people + 1)
+        if p_env.first().total_people == prev_people + 1:
+            p_env.update(is_completed=True)
+
+        return JsonResponse({'status': True}, status=201)
+    except Exception as e:
+        return JsonResponse({'status': False,'error': str(e)}, status=500)

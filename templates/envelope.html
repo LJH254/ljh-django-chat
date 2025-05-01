@@ -516,6 +516,25 @@
             document.getElementById('release-btn-complete').disabled = !isFormValid;
         }
 
+        async function release_env() {
+            isFinished = true;
+
+            const response = await FetchData(`//${window.location.host}/api/release_envelope`,{
+                csrfToken: "{{ csrfToken }}",
+                total: parseFloat(document.getElementById('id_total').value),
+                total_people: parseInt(document.getElementById('id_total_people').value),
+                word: document.getElementById('id_word').value
+            });
+
+            showToast(response.status, response.status ? '操作成功！' :
+                `操作遇到错误，错误信息：<br>${response.error}<br>请联系站长解决。`);
+
+            if (response.status) {
+                const people_amt_el = document.querySelectorAll('.people-amt');
+                people_amt_el[currentId - 1].textContent = `${envs_data[currentId].recv_people + 1}/${envs_data[currentId].people}人`;
+            }
+        }
+
         // 侧边栏控制逻辑
         document.addEventListener('DOMContentLoaded', function() {
             document.querySelector('.sidebar-toggle').addEventListener('click', function() {
