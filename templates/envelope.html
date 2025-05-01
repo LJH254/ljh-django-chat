@@ -522,9 +522,11 @@
                 document.querySelector('.sidebar').classList.toggle('active');
             });
 
-            document.getElementById('EnvModal').addEventListener('hidden.bs.modal', function () {
-                if (!isFinished) showToast(false, '操作已取消。');
-                isFinished = false;
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.addEventListener('hidden.bs.modal', function () {
+                    if (!isFinished) showToast(false, '操作已取消。');
+                    isFinished = false;
+                });
             });
 
             document.getElementById('id_total').type = 'text';
