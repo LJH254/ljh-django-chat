@@ -1,0 +1,26 @@
+{% extends 'chat_base.html' %}
+
+{% block input_style %}
+        .input-container input {
+            flex-grow: 1;
+            margin-right: 10px;
+            padding: 10px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        .input-container button {
+            padding: 10px;
+            font-size: 0.9rem;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+{% endblock %}
+
+{% block input %}
+    <input type="text" id="userMessage" placeholder="输入消息..." required>
+{% endblock %}
