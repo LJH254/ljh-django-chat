@@ -370,35 +370,35 @@
                 <div style="display: inline-block;width: 70%;">
                     <div class="list-container">
                         <div class="list-group">
-                        <!-- 修改为4个红包选项，添加data-id属性 -->
-                        {% for envelope in public_env_qs %}
-                            {% if envelope.is_completed %}
-                                <a class="list-group-item list-item disabled" data-id="{{ envelope.id }}" disabled>
-                                    <div class="d-flex w-100 justify-content-between">
-                                        {% if envelope.publisher == csrfToken %}
-                                            <p class="mb-1">你发布的红包</p>
-                                        {% else %}
-                                            <p class="mb-1">用户发布的红包</p>
-                                        {% endif %}
-                                    </div>
-                                    <small class="text-muted">{{ envelope.total }}元</small>
-                                    <label class="text-muted people-amt">{{ envelope.received_total_people }}/{{ envelope.total_people }}人</label>
-                                </a>
-                            {% else %}
-                                <a class="list-group-item list-item" data-id="{{ envelope.id }}" onclick="changeType({{ envelope.id }})">
-                                    <div class="d-flex w-100 justify-content-between">
-                                        {% if envelope.publisher == csrfToken %}
-                                            <p class="mb-1">你发布的红包</p>
-                                        {% else %}
-                                            <p class="mb-1">用户发布的红包</p>
-                                        {% endif %}
-                                    </div>
-                                    <small class="text-muted">{{ envelope.total }}元</small>
-                                    <label class="text-muted people-amt">{{ envelope.received_total_people }}/{{ envelope.total_people }}人</label>
-                                </a>
-                            {% endif %}
-                        {% endfor %}
-                    </div>
+                            <!-- 修改为4个红包选项，添加data-id属性 -->
+                            {% for envelope in public_env_qs %}
+                                {% if envelope.is_completed %}
+                                    <a class="list-group-item list-item disabled" data-id="{{ envelope.id }}" disabled>
+                                        <div class="d-flex w-100 justify-content-between">
+                                            {% if envelope.publisher == csrfToken %}
+                                                <p class="mb-1">你发布的红包</p>
+                                            {% else %}
+                                                <p class="mb-1">用户发布的红包</p>
+                                            {% endif %}
+                                        </div>
+                                        <small class="text-muted">{{ envelope.total }}元</small>
+                                        <label class="text-muted people-amt">{{ envelope.received_total_people }}/{{ envelope.total_people }}人</label>
+                                    </a>
+                                {% else %}
+                                    <a class="list-group-item list-item" data-id="{{ envelope.id }}" onclick="changeType({{ envelope.id }})">
+                                        <div class="d-flex w-100 justify-content-between">
+                                            {% if envelope.publisher == csrfToken %}
+                                                <p class="mb-1">你发布的红包</p>
+                                            {% else %}
+                                                <p class="mb-1">用户发布的红包</p>
+                                            {% endif %}
+                                        </div>
+                                        <small class="text-muted">{{ envelope.total }}元</small>
+                                        <label class="text-muted people-amt">{{ envelope.received_total_people }}/{{ envelope.total_people }}人</label>
+                                    </a>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
                     </div>
                     <div style="display: flex;align-items: center;justify-content: center">
                         <button class="btn btn-primary release-btn" data-bs-toggle="modal" data-bs-target="#ReleaseModal">
@@ -518,20 +518,41 @@
 
         async function release_env() {
             isFinished = true;
+            const total = document.getElementById('id_total').value;
+            const total_people = parseInt(document.getElementById('id_total_people').value);
+            const word = document.getElementById('id_word').value;
 
             const response = await FetchData(`//${window.location.host}/api/release_envelope`,{
                 csrfToken: "{{ csrfToken }}",
-                total: parseFloat(document.getElementById('id_total').value),
-                total_people: parseInt(document.getElementById('id_total_people').value),
-                word: document.getElementById('id_word').value
+                total: parseFloat(total),
+                total_people: total_people,
+                word: word
             });
 
             showToast(response.status, response.status ? '操作成功！' :
                 `操作遇到错误，错误信息：<br>${response.error}<br>请联系站长解决。`);
 
             if (response.status) {
-                const people_amt_el = document.querySelectorAll('.people-amt');
-                people_amt_el[currentId - 1].textContent = `${envs_data[currentId].recv_people + 1}/${envs_data[currentId].people}人`;
+                document.querySelector('.list-group').innerHTML += `
+<a class="list-group-item list-item" data-id="${response.id}" onclick="changeType(${response.id})">
+    <div class="d-flex w-100 justify-content-between">
+        <p class="mb-1">你发布的红包</p>
+    </div>
+    <small class="text-muted">${total}元</small>
+    <label class="text-muted people-amt">0/${total_people}人</label>
+</a>
+`
+                envs_data[response.id] = {
+                    name: word,
+                    amount: total,
+                    people: total_people,
+                    recv_people: 0,
+                    is_completed: false
+                };
+
+                document.querySelectorAll('.required').forEach(element => {
+                    element.value = '';
+                });
             }
         }
 
