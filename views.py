@@ -144,7 +144,7 @@ def release_envelope(request):
                                       total_people=data['total_people'],
                                       received_total_people=0,
                                       is_completed=False,
-                                      per_person=generate_floats(data['total_people'], data['total']),
+                                      per_person=','.join(map(str, generate_floats(data['total_people'], data['total']))),
                                       )
 
         u_env_qs = UserEnvelope.objects.filter(csrftoken=data['csrfToken'])

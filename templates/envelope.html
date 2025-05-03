@@ -577,6 +577,8 @@
 
                 document.getElementById('balance').textContent = (balance - total).toFixed(2);
                 balance = parseFloat(document.getElementById('balance').textContent);
+
+                auto_select();
             }
         }
 
@@ -591,7 +593,11 @@
                 }
             });
 
-            if (!has_available) document.querySelector('.redpacket-container').style.display = 'none';
+            if (has_available) {
+                document.querySelector('.redpacket-container').style.display = 'grid';
+            } else {
+                document.querySelector('.redpacket-container').style.display = 'none';
+            }
         }
 
         function changeType(id) {
