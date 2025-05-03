@@ -57,20 +57,6 @@ def generate_floats(n, total):
     return scaled
 
 
-class PublicEnvelopeForm(ModelForm):
-    class Meta:
-        model = PublicEnvelope
-        fields = ['total', 'total_people', 'received_total_people', 'word', 'per_person', 'publisher', 'is_completed']
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        for name, field in self.fields.items():
-            field.widget.attrs['class'] = 'form-control required'
-            field.widget.attrs['placeholder'] = field.label
-            field.widget.attrs['display'] = 'inline-block'
-            field.widget.attrs['width'] = '80%'
-
-
 def envelope(request):
     try:
         csrftoken = request.COOKIES['csrftoken']
@@ -84,14 +70,25 @@ def envelope(request):
         UserEnvelope.objects.create(csrftoken=csrftoken, total=0)
         return render(request, 'envelope.html', {'envelope_total': '0.00', 'public_env_qs':public_env_qs, 'csrfToken': csrftoken})
 
-    p_env_form = PublicEnvelopeForm()
-    shown_id = ['id_total', 'id_total_people', 'id_word']
+    received_envs_ids = list(map(int, user_env_qs.received_envs_ids.split(','))) if user_env_qs.received_envs_ids else []
+    envs_data = {}
+
+    for e in public_env_qs:
+        envs_data[e.id] = {
+            'name': e.word,
+            'amount': float(e.total),
+            'people': e.total_people,
+            'recv_people': e.received_total_people,
+            'is_completed': e.is_completed,
+            'is_in': e.id in received_envs_ids,
+        }
+
     return render(request, 'envelope.html', {
         'envelope_total': user_env_qs.total,
+        'received_envs_ids': received_envs_ids,
         'public_env_qs': public_env_qs,
         'csrfToken': csrftoken,
-        'p_env_form': p_env_form,
-        'p_shown_id': shown_id
+        'envs_data': json.dumps(envs_data, ensure_ascii=True),
     })
 
 
@@ -117,7 +114,9 @@ def modify_user_money(request):
 
         u_env_qs = UserEnvelope.objects.filter(csrftoken=data['csrfToken'])
         prev_total = u_env_qs.first().total
-        u_env_qs.update(total=float(prev_total) + data['total'])
+        prev_recv_envs_ids = [] if not u_env_qs.first().received_envs_ids else u_env_qs.first().received_envs_ids.split(',')
+        prev_recv_envs_ids.append(str(data['id']))
+        u_env_qs.update(total=float(prev_total) + data['total'],received_envs_ids=','.join(prev_recv_envs_ids))
 
         p_env = PublicEnvelope.objects.filter(id=data['id'])
         prev_people = p_env.first().received_total_people
@@ -143,6 +142,10 @@ def release_envelope(request):
                                       is_completed=False,
                                       per_person=generate_floats(data['total_people'], data['total']),
                                       )
+
+        u_env_qs = UserEnvelope.objects.filter(csrftoken=data['csrfToken'])
+        prev_total = u_env_qs.first().total
+        u_env_qs.update(total=float(prev_total) - data['total'])
 
         return JsonResponse({'status': True, 'id': new_env.id}, status=201)
     except Exception as e:

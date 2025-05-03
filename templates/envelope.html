@@ -70,7 +70,6 @@
             display: grid;
             grid-template-columns: 1fr 2fr;
             grid-gap: 30px;
-            height: calc(100vh - 160px);
         }
 
         /* 新增标题样式 */
@@ -372,8 +371,8 @@
                         <div class="list-group">
                             <!-- 修改为4个红包选项，添加data-id属性 -->
                             {% for envelope in public_env_qs %}
-                                {% if envelope.is_completed %}
-                                    <a class="list-group-item list-item disabled" data-id="{{ envelope.id }}" disabled>
+                                {% if envelope.is_completed or envelope.id in received_envs_ids %}
+                                    <a class="list-group-item list-item disabled" data-id="{{ envelope.id }}">
                                         <div class="d-flex w-100 justify-content-between">
                                             {% if envelope.publisher == csrfToken %}
                                                 <p class="mb-1">你发布的红包</p>
@@ -441,34 +440,40 @@
                 </div>
             </div>
 
-            <div class="modal fade" id="ReleaseModal" tabindex="-1" style="color: #000;" data-bs-backdrop="static" aria-labelledby="TitleLabel" aria-hidden="true">
+            <div class="modal fade" id="ReleaseModal" tabindex="-1" style="color: #000;" aria-labelledby="RTitleLabel" aria-hidden="true">
                 <div class="modal-dialog">
                     <div class="modal-content" style="box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);">
                         <div class="modal-header">
-                            <h5 class="modal-title" id="TitleLabel" style="margin-left: 8px;font-size: 1rem;">发布红包</h5>
+                            <h5 class="modal-title" id="RTitleLabel" style="margin-left: 8px;font-size: 1rem;">发布红包</h5>
                             <button type="button" class="btn-close" id="btn-close" data-bs-dismiss="modal" style="width: auto;height: auto;margin-right: 3px !important;" aria-label="Close"></button>
                         </div>
                         <div class="modal-body" style="padding: 1.1rem;">
                             <div class="form-group">
                                 <form id="releaseForm">
                                     {% csrf_token %}
-                                    {% for p_env_input in p_env_form %}
-                                        {% if p_env_input.id_for_label in p_shown_id %}
-                                            <div class="mb-3 form-group">
-                                                <div class="input-group">
-                                                    <span class="input-group-text">
-                                                        {{ p_env_input.label }}
-                                                    </span>
-                                                    {{ p_env_input }}
-                                                </div>
-                                            </div>
-                                        {% endif %}
-                                    {% endfor %}
+                                    <div class="mb-3 form-group">
+                                        <div class="input-group">
+                                            <span class="input-group-text">红包总钱数</span>
+                                            <input type="text" name="total" class="form-control required" placeholder="红包总钱数" width="80%" id="total">
+                                        </div>
+                                    </div>
+                                    <div class="mb-3 form-group">
+                                        <div class="input-group">
+                                            <span class="input-group-text">总人数</span>
+                                            <input type="text" name="total" class="form-control required" placeholder="总人数" width="80%" id="total_people">
+                                        </div>
+                                    </div>
+                                    <div class="mb-3 form-group">
+                                        <div class="input-group">
+                                            <span class="input-group-text">祝福语</span>
+                                            <input type="text" name="total" class="form-control required" placeholder="祝福语" width="80%" id="word">
+                                        </div>
+                                    </div>
                                 </form>
                             </div>
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-primary" id="release-btn-complete" data-bs-dismiss="modal" onclick="release_env()" disabled>完成</button>
+                            <button type="button" class="btn btn-primary" id="release-btn-complete" onclick="release_env()" disabled>完成</button>
                         </div>
                     </div>
                 </div>
@@ -487,7 +492,6 @@
 
         async function modify() {
             isFinished = true;
-            document.getElementById('balance').textContent = (balance + parseFloat(window.current_env_amt)).toFixed(2);
 
             const response = await FetchData(`//${window.location.host}/api/modify_user_money`,{
                 csrfToken: "{{ csrfToken }}",
@@ -501,7 +505,14 @@
             if (response.status) {
                 const people_amt_el = document.querySelectorAll('.people-amt');
                 people_amt_el[currentId - 1].textContent = `${envs_data[currentId].recv_people + 1}/${envs_data[currentId].people}人`;
+                document.getElementById('balance').textContent = (balance + parseFloat(window.current_env_amt)).toFixed(2);
+                balance = parseFloat(document.getElementById('balance').textContent);
             }
+
+            document.querySelectorAll('.list-item')[currentId - 1].classList.remove('active');
+            document.querySelectorAll('.list-item')[currentId - 1].classList.add('disabled');
+            envs_data[currentId].is_in = true;
+            auto_select();
         }
 
         function checkFormValidity() {
@@ -518,13 +529,18 @@
 
         async function release_env() {
             isFinished = true;
-            const total = document.getElementById('id_total').value;
-            const total_people = parseInt(document.getElementById('id_total_people').value);
-            const word = document.getElementById('id_word').value;
+            const total = parseFloat(document.getElementById('total').value);
+            const total_people = parseInt(document.getElementById('total_people').value);
+            const word = document.getElementById('word').value;
+
+            if (balance < total) {
+                showToast(false, '余额不足！')
+                return
+            }
 
             const response = await FetchData(`//${window.location.host}/api/release_envelope`,{
                 csrfToken: "{{ csrfToken }}",
-                total: parseFloat(total),
+                total: total,
                 total_people: total_people,
                 word: word
             });
@@ -533,6 +549,8 @@
                 `操作遇到错误，错误信息：<br>${response.error}<br>请联系站长解决。`);
 
             if (response.status) {
+                releaseModal.hide();
+
                 document.querySelector('.list-group').innerHTML += `
 <a class="list-group-item list-item" data-id="${response.id}" onclick="changeType(${response.id})">
     <div class="d-flex w-100 justify-content-between">
@@ -547,121 +565,34 @@
                     amount: total,
                     people: total_people,
                     recv_people: 0,
-                    is_completed: false
+                    is_completed: false,
+                    is_in: false
                 };
 
                 document.querySelectorAll('.required').forEach(element => {
                     element.value = '';
                 });
+
+                document.getElementById('release-btn-complete').disabled = true;
+
+                document.getElementById('balance').textContent = (balance - total).toFixed(2);
+                balance = parseFloat(document.getElementById('balance').textContent);
             }
         }
 
-        // 侧边栏控制逻辑
-        document.addEventListener('DOMContentLoaded', function() {
-            document.querySelector('.sidebar-toggle').addEventListener('click', function() {
-                document.querySelector('.sidebar').classList.toggle('active');
-            });
+        function auto_select() {
+            let has_available = false;
 
-            document.querySelectorAll('.modal').forEach(modal => {
-                modal.addEventListener('hidden.bs.modal', function () {
-                    if (!isFinished) showToast(false, '操作已取消。');
-                    isFinished = false;
-                });
-            });
-
-            document.getElementById('id_total').type = 'text';
-
-            document.getElementById('id_total').addEventListener('input', function(e) {
-                let value = e.target.value;
-                // 移除所有非数字和小数点的字符，并确保最多一个小数点
-                value = value.replace(/[^0-9.]/g, '')
-                            .replace(/(\..*)\./g, '$1')
-                            .replace(/^(-|0+)/, '');
-                // 如果以小数点开头，可自动补零（可选）
-                if (value.startsWith('.')) value = '0' + value;
-
-                const parts = value.split('.');
-                if (parts.length > 1) {
-                    parts[1] = parts[1].slice(0, 2);
-                    value = parts.join('.');
-                }
-
-                e.target.value = value;
-            });
-
-            document.getElementById('id_total').addEventListener('blur', function(e) {
-                let value = e.target.value;
-                if (value === '') return;
-
-                // 补全两位小数（如将"5"转为"5.00"，"5.1"转为"5.10"）
-                if (!value.includes('.')) {
-                    value += '.00';
-                } else {
-                    if (/^\d+\.$/.test(value)) {
-                        value = (value === '0.') ? `${value}01` : `${value}00`;
-                    } else {
-                        const parts = value.split('.');
-                        if (parts[1].length === 1) parts[1] += '0';
-                        value = parts.join('.');
-                    }
-                }
-
-                e.target.value = value;
-            });
-
-            document.getElementById('id_total_people').type = 'text';
-
-            document.getElementById('id_total_people').addEventListener('input', function(e) {
-                this.value = this.value.replace(/[^0-9]/g, '').replace(/^0+/, '');
-                if (parseInt(this.value) < 1 || this.value === '0') {
-                    this.value = '';
+            Object.keys(envs_data).some(id => {
+                if (!(envs_data[id].is_completed || envs_data[id].is_in)) {
+                    changeType(id);
+                    has_available = true;
+                    return true;
                 }
             });
 
-            document.querySelectorAll('.required').forEach(element => {
-                element.addEventListener('input', checkFormValidity);  // 适用于输入框和文本框
-            });
-        });
-
-        let isFinished = false;
-        const toastEl = document.getElementById('tipToast');
-        const toast = new bootstrap.Toast(toastEl, {
-            autohide: true,
-            delay: 2000
-        });
-
-        toastEl.addEventListener('show.bs.toast', function() {
-            toastEl.style.animation = 'fadeIn 0.3s';
-        });
-
-        toastEl.addEventListener('hide.bs.toast', function() {
-            toastEl.style.animation = 'fadeOut 0.3s';
-        });
-
-        // 改为使用ID标识
-        let currentId = 1;
-        const envs_data = {};
-        let balance = parseFloat(document.getElementById('balance').textContent);
-        const False = false; // Python中0叫做False，JS中则叫false，所以需要把False指定为false
-        const True = true; // 同理
-
-        {% for envelope in public_env_qs %}
-            envs_data[{{ envelope.id }}] = {
-                name: "{{ envelope.word }}",
-                amount: {{ envelope.total }},
-                people: {{ envelope.total_people }},
-                recv_people: {{ envelope.received_total_people }},
-                is_completed: {{ envelope.is_completed }}
-            };
-        {% endfor %}
-
-        Object.keys(envs_data).some(id => {
-            if (!envs_data[id].is_completed) {
-                document.querySelectorAll('.list-item')[id - 1].classList.add('active');
-                document.getElementById('title').textContent = envs_data[id].name;
-                return true;
-            }
-        });
+            if (!has_available) document.querySelector('.redpacket-container').style.display = 'none';
+        }
 
         function changeType(id) {
             currentId = id;
@@ -743,6 +674,100 @@
             close.disabled = false;
             btn_complete.disabled = false;
         }
+
+        // 侧边栏控制逻辑
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelector('.sidebar-toggle').addEventListener('click', function() {
+                document.querySelector('.sidebar').classList.toggle('active');
+            });
+
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.addEventListener('hidden.bs.modal', function () {
+                    if (!isFinished) showToast(false, '操作已取消。');
+                    isFinished = false;
+                });
+            });
+
+            document.getElementById('total').type = 'text';
+
+            document.getElementById('total').addEventListener('input', function(e) {
+                let value = e.target.value;
+                // 移除所有非数字和小数点的字符，并确保最多一个小数点
+                value = value.replace(/[^0-9.]/g, '')
+                            .replace(/(\..*)\./g, '$1')
+                            .replace(/^(-|0+)/, '');
+                // 如果以小数点开头，可自动补零（可选）
+                if (value.startsWith('.')) value = '0' + value;
+
+                const parts = value.split('.');
+                if (parts.length > 1) {
+                    parts[1] = parts[1].slice(0, 2);
+                    value = parts.join('.');
+                }
+
+                e.target.value = value;
+            });
+
+            document.getElementById('total').addEventListener('blur', function(e) {
+                let value = e.target.value;
+                if (value === '') return;
+
+                // 补全两位小数（如将"5"转为"5.00"，"5.1"转为"5.10"）
+                if (!value.includes('.')) {
+                    value += '.00';
+                } else {
+                    if (/^\d+\.$/.test(value)) {
+                        value = (value === '0.') ? `${value}01` : `${value}00`;
+                    } else {
+                        if (value === '0.00') {
+                            value = '0.01'
+                        } else {
+                            const parts = value.split('.');
+                            if (parts[1].length === 1) parts[1] += '0';
+                            value = parts.join('.');
+                        }
+                    }
+                }
+
+                e.target.value = value;
+            });
+
+            document.getElementById('total_people').type = 'text';
+
+            document.getElementById('total_people').addEventListener('input', function(e) {
+                this.value = this.value.replace(/[^0-9]/g, '').replace(/^0+/, '');
+                if (parseInt(this.value) < 1 || this.value === '0') {
+                    this.value = '';
+                }
+            });
+
+            document.querySelectorAll('.required').forEach(element => {
+                element.addEventListener('input', checkFormValidity);  // 适用于输入框和文本框
+            });
+        });
+
+        let isFinished = false;
+        const toastEl = document.getElementById('tipToast');
+        const toast = new bootstrap.Toast(toastEl, {
+            autohide: true,
+            delay: 2000
+        });
+        const releaseModal = new bootstrap.Modal(document.getElementById('ReleaseModal'));
+
+        toastEl.addEventListener('show.bs.toast', function() {
+            toastEl.style.animation = 'fadeIn 0.3s';
+        });
+
+        toastEl.addEventListener('hide.bs.toast', function() {
+            toastEl.style.animation = 'fadeOut 0.3s';
+        });
+
+        // 改为使用ID标识
+        let currentId = 1;
+        const envs_data = {{ envs_data|safe }};
+        let balance = parseFloat(document.getElementById('balance').textContent);
+
+        auto_select();
     </script>
 </body>
 </html>
