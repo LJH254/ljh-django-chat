@@ -21,6 +21,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
         msg_dict = {"csrf_token": '', "message": "（可以开始聊天了）"}
         await self.send(json.dumps(msg_dict))
 
+        for msg_list in chat_history:
+            m = json.dumps({"csrf_token": msg_list[0], "message": msg_list[1]})
+            await self.send(m)
+
     async def disconnect(self, close_code):
         # 当连接断开时调用
         await self.channel_layer.group_discard(
@@ -33,23 +37,27 @@ class ChatConsumer(AsyncWebsocketConsumer):
         text_data_json = json.loads(text_data)
         message = text_data_json['message']
         csrftoken = text_data_json['csrfToken']
-        chat_history.append([csrftoken, message])
 
         # 广播消息到群组
         await self.channel_layer.group_send(
             self.room_group_name,
             {
                 'type': 'chat_message',
-                'csrftoken': csrftoken,
-                'message': message
+                'csrf_token': csrftoken,
+                'message': message,
+                'sender_channel': self.channel_name
             }
         )
 
     async def chat_message(self, event):
+        if self.channel_name == event['sender_channel']:
+            return
+
         # 处理群组发送的消息
         message = event['message']
-        csrftoken = event['csrfToken']
+        csrftoken = event['csrf_token']
+        chat_history.append([csrftoken, message])
         await self.send(text_data=json.dumps({
-            'csrftoken': csrftoken,
+            'csrf_token': csrftoken,
             'message': message
         }))
