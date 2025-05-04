@@ -31,7 +31,7 @@
         function main() {
             let isFirst = true;
             // 创建 WebSocket 连接
-            socket = new WebSocket('ws://a4a16b1468777331.natapp.cc:7128'); // 替换成你的 WebSocket 服务端 URL
+            socket = new WebSocket(`ws://${window.location.host}/ws/chat/`); // 替换成你的 WebSocket 服务端 URL
 
             // WebSocket 连接打开后
             socket.onopen = function() {
