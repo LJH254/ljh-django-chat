@@ -1,4 +1,5 @@
 {% load static %}
+
 <!DOCTYPE html>
 <html lang="zh">
 <head>
@@ -275,32 +276,8 @@
             height: 2.5rem;
         }
 
-        /* 垂直居中关键样式 */
-        .modal {
-            text-align: center;
-            padding: 0 !important;
-        }
-
-        .modal:before {
-            content: '';
-            display: inline-block;
-            height: 100%;
-            vertical-align: middle;
-            margin-right: -4px; /* 微调对齐 */
-        }
-
-        .modal-dialog {
-            display: inline-block;
-            text-align: left;
-            vertical-align: middle;
-        }
-
         /* 响应式宽度设置 */
-        @media (min-width: 768px) {
-            .modal-dialog {
-                width: 600px;
-            }
-        }
+
 
         @media (max-width: 768px) {
             .chat-container {
@@ -379,7 +356,7 @@
 
     <!-- 弹窗结构 -->
     <div class="modal fade" id="AncModal" tabindex="-1" style="color: #000;" aria-labelledby="TitleLabel" aria-hidden="true">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content" style="box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);">
                 <div class="modal-header">
                     <h5 class="modal-title" id="TitleLabel" style="margin-left: 8px;font-size: 1rem;">网站公告</h5>
