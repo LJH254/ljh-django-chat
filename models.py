@@ -8,6 +8,7 @@ class UserEnvelope(models.Model):
                                 decimal_places=2,
                                 default=0)
     received_envs_ids = models.TextField(verbose_name='用户领取过红包的ID',default='')
+    nickname = models.CharField(verbose_name='用户昵称',max_length=50,default='')
 
 
 class PublicEnvelope(models.Model):

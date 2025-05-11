@@ -323,6 +323,10 @@
                 <i class="fa-duotone fa-regular fa-envelope i-margin"></i>
                 抢红包
             </a>
+            <a data-bs-toggle="modal" data-bs-target="#phoneModal" style="cursor: pointer;" class="sidebar-link">
+                <i class="fa-duotone fa-regular fa-phone i-margin"></i>
+                视频通话
+            </a>
         </div>
     </div>
 
@@ -352,12 +356,11 @@
         </form>
     </div>
 
-    <!-- 弹窗结构 -->
-    <div class="modal fade" id="AncModal" tabindex="-1" style="color: #000;" aria-labelledby="TitleLabel" aria-hidden="true">
+    <div class="modal fade" id="AncModal" tabindex="-1" style="color: #000;" aria-labelledby="AncTitleLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content" style="box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="TitleLabel" style="margin-left: 8px;font-size: 1rem;">网站公告</h5>
+                    <h5 class="modal-title" id="AncTitleLabel" style="margin-left: 8px;font-size: 1rem;">网站公告</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body" style="padding: 1.1rem;">
@@ -375,6 +378,23 @@
                         </li>
                     </ol>
                     功能预告：下一版本中会增加视频通话功能。
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" id="btn-complete" data-bs-dismiss="modal">完成</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="phoneModal" tabindex="-1" style="color: #000;" aria-labelledby="PhoneTitleLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="PhoneTitleLabel" style="margin-left: 8px;font-size: 1rem;">发起通话</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" style="padding: 1.1rem;">
+
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-primary" id="btn-complete" data-bs-dismiss="modal">完成</button>
