@@ -1,6 +1,5 @@
 from django.shortcuts import render, redirect
 from PChat.models import UserEnvelope, PublicEnvelope
-from django.forms import ModelForm
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from random import uniform
@@ -27,12 +26,6 @@ def password(request):
             # return HttpResponse('OK!')
         return render(request, 'password.html', {'msg': '暗号错误！', 'method': 'POST'})
 
-
-def run():
-    from subprocess import Popen
-    Popen(['python', 'chat_server.py'], shell=True)
-
-
 def homepage(request):
     try:
         csrftoken = request.COOKIES['csrftoken']
@@ -40,12 +33,11 @@ def homepage(request):
         print(ke)
         return redirect('/chat/')
 
-    run()
     if not request.session.get('is_authenticated', False):
         return redirect('/')
 
     request.session.set_expiry(0)
-    return render(request, 'chat_base.html',{'csrfToken':csrftoken})
+    return render(request, 'chat_base.html',{'csrfToken':csrftoken,'input_nickname':(not UserEnvelope.objects.filter(csrftoken=csrftoken).first())})
 
 
 def generate_floats(n, total):
@@ -71,8 +63,11 @@ def envelope(request):
     public_env_qs = PublicEnvelope.objects.all()
 
     if not user_env_qs: # 用户第一次访问此页面
-        UserEnvelope.objects.create(csrftoken=csrftoken, total=0)
-        return render(request, 'envelope.html', {'envelope_total': '0.00', 'public_env_qs':public_env_qs, 'csrfToken': csrftoken})
+        return render(request, 'envelope.html', {
+            'envelope_total': '0.00',
+            'public_env_qs':public_env_qs,
+            'csrfToken': csrftoken
+        })
 
     received_envs_ids = list(map(int, user_env_qs.received_envs_ids.split(','))) if user_env_qs.received_envs_ids else []
     envs_data = {}
@@ -92,7 +87,7 @@ def envelope(request):
         'received_envs_ids': received_envs_ids,
         'public_env_qs': public_env_qs,
         'csrfToken': csrftoken,
-        'envs_data': json.dumps(envs_data, ensure_ascii=True),
+        'envs_data': json.dumps(envs_data, ensure_ascii=True)
     })
 
 
