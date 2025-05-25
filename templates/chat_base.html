@@ -20,12 +20,21 @@
             });
             const ModalElement = document.getElementById('AncModal')
             const AncModal = new bootstrap.Modal(ModalElement);
-            AncModal.show();
 
             ModalElement.addEventListener('hidden.bs.modal', main);
 
             {% if input_nickname %}
-                new bootstrap.Modal(document.getElementById('NMModal')).show();
+                const NMModal = new bootstrap.Modal(document.getElementById('NMModal'));
+                NMModal.show();
+                NMModal.addEventListener('hidden.bs.modal', () => {
+                    AncModal.show();
+                })
+                document.getElementById('nickname').addEventListener('input', function (e) {
+                    const nm_c_btn = document.getElementById('NM-btn-complete');
+                    nm_c_btn.disabled = e.target.value.trim() !== '';
+                });
+            {% else %}
+                AncModal.show();
             {% endif %}
         });
 
@@ -386,7 +395,7 @@
                     功能预告：下一版本中会增加视频通话功能。
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-primary" id="btn-complete" data-bs-dismiss="modal">完成</button>
+                    <button type="button" class="btn btn-primary" id="Anc-btn-complete" data-bs-dismiss="modal">完成</button>
                 </div>
             </div>
         </div>
@@ -409,18 +418,17 @@
         </div>
     </div>
 
-    <div class="modal fade" id="NMModal" tabindex="-1" style="color: #000;" aria-labelledby="NMTitleLabel" aria-hidden="true">
+    <div class="modal fade" id="NMModal" tabindex="-1" style="color: #000;" aria-labelledby="NMTitleLabel" aria-hidden="true" data-bs-backdrop="static">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content" style="box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);">
                 <div class="modal-header">
                     <h5 class="modal-title" id="NMTitleLabel" style="margin-left: 8px;font-size: 1rem;">输入昵称</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body" style="padding: 1.1rem;">
                     <input id="nickname" name="nickname" class="form-control" placeholder="这是你第一次访问，输入个昵称吧！">
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-primary" id="btn-complete" data-bs-dismiss="modal" onclick="m_nickname();">完成</button>
+                    <button type="button" class="btn btn-primary" id="NM-btn-complete" data-bs-dismiss="modal" onclick="m_nickname();" disabled>完成</button>
                 </div>
             </div>
         </div>
