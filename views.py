@@ -149,7 +149,7 @@ def release_envelope(request):
                                                 is_completed=False,
                                                 per_person=','.join(
                                                     map(str, generate_floats(data['total_people'], data['total']))
-                                                ),
+                                                )
                                                 )
 
         u_env_qs = UserEnvelope.objects.filter(csrftoken=data['csrfToken'])
@@ -167,7 +167,7 @@ def modify_nickname(request):
         data = json.loads(request.body)
 
         UserEnvelope.objects.create(csrftoken=data['csrfToken'],
-                                    total_people=0,
+                                    total=0,
                                     received_envs_ids='',
                                     nickname=data['nickname']
                                     )

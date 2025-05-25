@@ -13,32 +13,17 @@
     <link rel="stylesheet" href="{% static 'css/font_awesome/all.css' %}"/>
     <link rel="stylesheet" href="{% static 'css/font_awesome/duotone-regular.css' %}"/>
     <script>
-        // 侧边栏控制逻辑
-        document.addEventListener('DOMContentLoaded', function() {
-            document.querySelector('.sidebar-toggle').addEventListener('click', function() {
-                document.querySelector('.sidebar').classList.toggle('active');
-            });
-            const ModalElement = document.getElementById('AncModal')
-            const AncModal = new bootstrap.Modal(ModalElement);
-
-            ModalElement.addEventListener('hidden.bs.modal', main);
-
-            {% if input_nickname %}
-                const NMModal = new bootstrap.Modal(document.getElementById('NMModal'));
-                NMModal.show();
-                NMModal.addEventListener('hidden.bs.modal', () => {
-                    AncModal.show();
-                })
-                document.getElementById('nickname').addEventListener('input', function (e) {
-                    const nm_c_btn = document.getElementById('NM-btn-complete');
-                    nm_c_btn.disabled = e.target.value.trim() !== '';
-                });
-            {% else %}
-                AncModal.show();
-            {% endif %}
-        });
+        function getCookie(name) {
+            const cookieValue = document.cookie
+                .split('; ')
+                .find(row => row.startsWith(`${name}=`))
+                ?.split('=')[1];
+            return cookieValue ? decodeURIComponent(cookieValue) : null;
+        }
 
         let socket;
+        let AncModal;
+        let NMModal;
 
         function main() {
             let isFirst = true;
@@ -121,11 +106,62 @@
             document.getElementById("userMessage").value = '';
         }
 
-        function m_nickname() {}
+        async function FetchData(path, body) {
+            const response = await fetch(path, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify(body)
+            })
+            return await response.json();
+        }
+
+        function showToast(state, tip) {
+            document.getElementById('toastIcon').innerHTML = state ? '<i class="fa-solid fa-circle-check fa-lg" style="color: green;"></i>' :
+                '<i class="fa-solid fa-circle-xmark fa-lg" style="color: red;"></i>';
+            document.getElementById('toastText').innerHTML = tip;
+            toast.show();
+        }
+
+        async function m_nickname() {
+            const nickname = document.getElementById('nickname').value;
+            const response = await FetchData(`//${window.location.host}/api/modify_nickname`,{
+                csrfToken: "{{ csrfToken }}",
+                nickname: nickname
+            });
+            if (!response.status) showToast(response.status,
+                `操作遇到错误，错误信息：<br>${response.error}<br>请联系站长解决。`
+            );
+        }
+
+        // 侧边栏控制逻辑
+        document.addEventListener('DOMContentLoaded', function() {
+            AncModal = new bootstrap.Modal(document.getElementById('AncModal'));
+            NMModal = new bootstrap.Modal(document.getElementById('NMModal'));
+            document.querySelector('.sidebar-toggle').addEventListener('click', function() {
+                document.querySelector('.sidebar').classList.toggle('active');
+            });
+
+            document.getElementById('AncModal').addEventListener('hidden.bs.modal', main);
+            {% if input_nickname %}
+                NMModal.show();
+                document.getElementById('NMModal').addEventListener('hidden.bs.modal', () => {
+                    AncModal.show();
+                })
+                document.getElementById('nickname').addEventListener('input', function (e) {
+                    const nm_c_btn = document.getElementById('NM-btn-complete');
+                    nm_c_btn.disabled = e.target.value.trim() === '';
+                });
+            {% else %}
+                AncModal.show();
+            {% endif %}
+        });
     </script>
 
     <style>
-        /* 使页面的 body 使用 Flexbox，确保聊天框居中 */
         body, html {
             width: 100%;
             height: 100%;
@@ -289,9 +325,6 @@
             height: 2.5rem;
         }
 
-        /* 响应式宽度设置 */
-
-
         @media (max-width: 768px) {
             .chat-container {
                 width: 55%;
@@ -324,10 +357,33 @@
             font-size: 1rem;
             margin-bottom: 0;
         }
+
+        .custom-toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1100;
+            animation-fill-mode: forwards;
+        }
+
+        .toast-body {
+            display: grid;
+            grid-template-columns: 1fr 6fr;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeOut {
+            from { opacity: 1; transform: translateY(0); }
+            to { opacity: 0; transform: translateY(-20px); }
+        }
     </style>
 </head>
 <body>
-    <!-- 新增侧边栏 -->
     <div class="sidebar">
         <div class="sidebar-content">
             <a href="/chat/" class="sidebar-link sidebar-link-now">
@@ -354,81 +410,99 @@
         <source src="{% static 'sound/ding.wav' %}" type="audio/mpeg">
     </audio>
 
-    <!-- 原有聊天容器保持不变 -->
-    <div class="chat-container">
-        <div class="chat-history" id="chatHistory">
-            <!-- 消息将显示在这里 -->
-        </div>
-        <form onsubmit="event.preventDefault(); sendMessage();" style="width: 100%">
-            {% csrf_token %}
-            <div class="input-container">
-                <input type="text" id="userMessage" placeholder="输入消息..." required>
-                <button type="submit" class="btn btn-primary" style="height: 2.5rem;width: 100px">
-                    <i class="fa-solid fa-paper-plane i-margin" style="color: #ffffff;"></i>
-                    发送
-                </button>
-            </div>
-        </form>
-    </div>
-
-    <div class="modal fade" id="AncModal" tabindex="-1" style="color: #000;" aria-labelledby="AncTitleLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content" style="box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="AncTitleLabel" style="margin-left: 8px;font-size: 1rem;">网站公告</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body" style="padding: 1.1rem;">
-                    <p style="font-size: 1.6rem;">聊天小网站 | Made by LJH</p>
-                    <p class="mt-2">由LJH开发，仅供LJH和CYL使用，其他人不得使用。</p>
-                    <div style="border-top: 3px solid #dee2e6;margin: 15px 0;"></div>
-                    <p>网站版本：1.0.2</p>
-                    <p>更新说明：</p>
-                    <ol>
-                        <li>
-                            界面有所优化，修复了部分bug。
-                        </li>
-                        <li>
-                            增加红包领取系统（详见侧边栏“红包”按钮）。用户不仅可以领取红包（余额可用于进行视频通话），还可以自行发布红包。
-                        </li>
-                    </ol>
-                    功能预告：下一版本中会增加视频通话功能。
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-primary" id="Anc-btn-complete" data-bs-dismiss="modal">完成</button>
+    <div class="container" style="display: flex;align-items: center;justify-content: center;">
+        <div class="toast-container custom-toast">
+            <div id="tipToast" style="animation: fadeIn 0.3s;border-radius: 12px;" class="toast align-items-center bg-white" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="d-flex">
+                    <div class="toast-body" id="toast-body">
+                        <div id="toastIcon" style="margin-right: 6px;">
+                            <!-- 这里填充图标 -->
+                        </div>
+                        <div id="toastText">
+                            <!-- 这里填充提示 -->
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
                 </div>
             </div>
         </div>
-    </div>
 
-    <div class="modal fade" id="phoneModal" tabindex="-1" style="color: #000;" aria-labelledby="PhoneTitleLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content" style="box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="PhoneTitleLabel" style="margin-left: 8px;font-size: 1rem;">发起通话</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body" style="padding: 1.1rem;">
+        <div class="chat-container">
+            <div class="chat-history" id="chatHistory">
 
+            </div>
+
+            <form onsubmit="event.preventDefault(); sendMessage();" style="width: 100%">
+                {% csrf_token %}
+                <div class="input-container">
+                    <input type="text" id="userMessage" placeholder="输入消息..." required>
+                    <button type="submit" class="btn btn-primary" style="height: 2.5rem;width: 100px">
+                        <i class="fa-solid fa-paper-plane i-margin" style="color: #ffffff;"></i>
+                        发送
+                    </button>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-primary" id="btn-complete" data-bs-dismiss="modal">完成</button>
+            </form>
+        </div>
+
+        <div class="modal fade" id="AncModal" tabindex="-1" style="color: #000;" aria-labelledby="AncTitleLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content" style="box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="AncTitleLabel" style="margin-left: 8px;font-size: 1rem;">网站公告</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body" style="padding: 1.1rem;">
+                        <p style="font-size: 1.6rem;">聊天小网站 | Made by LJH</p>
+                        <p class="mt-2">由LJH开发，仅供LJH和CYL使用，其他人不得使用。</p>
+                        <div style="border-top: 3px solid #dee2e6;margin: 15px 0;"></div>
+                        <p>网站版本：1.0.2</p>
+                        <p>更新说明：</p>
+                        <ol>
+                            <li>
+                                界面有所优化，修复了部分bug。
+                            </li>
+                            <li>
+                                增加红包领取系统（详见侧边栏“红包”按钮）。用户不仅可以领取红包（余额可用于进行视频通话），还可以自行发布红包。
+                            </li>
+                        </ol>
+                        功能预告：下一版本中会增加视频通话功能。
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" id="Anc-btn-complete" data-bs-dismiss="modal">完成</button>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <div class="modal fade" id="NMModal" tabindex="-1" style="color: #000;" aria-labelledby="NMTitleLabel" aria-hidden="true" data-bs-backdrop="static">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content" style="box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="NMTitleLabel" style="margin-left: 8px;font-size: 1rem;">输入昵称</h5>
+        <div class="modal fade" id="phoneModal" tabindex="-1" style="color: #000;" aria-labelledby="PhoneTitleLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content" style="box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="PhoneTitleLabel" style="margin-left: 8px;font-size: 1rem;">发起通话</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body" style="padding: 1.1rem;">
+
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" id="btn-complete" data-bs-dismiss="modal">完成</button>
+                    </div>
                 </div>
-                <div class="modal-body" style="padding: 1.1rem;">
-                    <input id="nickname" name="nickname" class="form-control" placeholder="这是你第一次访问，输入个昵称吧！">
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-primary" id="NM-btn-complete" data-bs-dismiss="modal" onclick="m_nickname();" disabled>完成</button>
+            </div>
+        </div>
+
+        <div class="modal fade" id="NMModal" tabindex="-1" style="color: #000;" aria-labelledby="NMTitleLabel" aria-hidden="true" data-bs-backdrop="static">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content" style="box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="NMTitleLabel" style="margin-left: 8px;font-size: 1rem;">输入昵称</h5>
+                    </div>
+                    <div class="modal-body" style="padding: 1.1rem;">
+                        <input id="nickname" name="nickname" class="form-control" placeholder="这是你第一次访问，输入个昵称吧！">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" id="NM-btn-complete" data-bs-dismiss="modal" onclick="m_nickname();" disabled>完成</button>
+                    </div>
                 </div>
             </div>
         </div>
