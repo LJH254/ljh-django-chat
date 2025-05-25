@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect
 from PChat.models import UserEnvelope, PublicEnvelope
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.views.decorators.http import require_http_methods
 from random import uniform
 import json
@@ -15,16 +15,18 @@ def password(request):
     elif request.method == "POST":
         post_data = request.POST
         pwd = [('不要玩烟卡', '不要玩烟卡；', '不要玩烟卡。'),
-                ('不要打开green文件夹', '不要打开green文件夹。'),
-                ('生意不是你这样做的', '生意不是你这样做的。'),
-                ('那它要是不熟怎么办？', '那它要是不熟怎么办')
-                ]
+               ('不要打开green文件夹', '不要打开green文件夹。'),
+               ('生意不是你这样做的', '生意不是你这样做的。'),
+               ('那它要是不熟怎么办？', '那它要是不熟怎么办')
+               ]
         if post_data.get('pwd_1') in pwd[0] and post_data.get('pwd_2') in pwd[1] and post_data.get('pwd_3') in pwd[
             2] and post_data.get('pwd_4') in pwd[3]:
             request.session['is_authenticated'] = True
             return redirect('/chat/')
             # return HttpResponse('OK!')
         return render(request, 'password.html', {'msg': '暗号错误！', 'method': 'POST'})
+    return HttpResponse('Invalid method')
+
 
 def homepage(request):
     try:
@@ -37,7 +39,10 @@ def homepage(request):
         return redirect('/')
 
     request.session.set_expiry(0)
-    return render(request, 'chat_base.html',{'csrfToken':csrftoken,'input_nickname':(not UserEnvelope.objects.filter(csrftoken=csrftoken).first())})
+    return render(request, 'chat_base.html', {
+        'csrfToken': csrftoken,
+        'input_nickname': not UserEnvelope.objects.filter(csrftoken=csrftoken).first()
+    })
 
 
 def generate_floats(n, total):
@@ -62,14 +67,15 @@ def envelope(request):
     user_env_qs = UserEnvelope.objects.filter(csrftoken=csrftoken).first()
     public_env_qs = PublicEnvelope.objects.all()
 
-    if not user_env_qs: # 用户第一次访问此页面
+    if not user_env_qs:  # 用户第一次访问此页面
         return render(request, 'envelope.html', {
             'envelope_total': '0.00',
-            'public_env_qs':public_env_qs,
-            'csrfToken': csrftoken
+            'public_env_qs': public_env_qs,
+            'csrfToken': csrftoken,
         })
 
-    received_envs_ids = list(map(int, user_env_qs.received_envs_ids.split(','))) if user_env_qs.received_envs_ids else []
+    received_envs_ids = list(
+        map(int, user_env_qs.received_envs_ids.split(','))) if user_env_qs.received_envs_ids else []
     envs_data = {}
 
     for e in public_env_qs:
@@ -100,9 +106,9 @@ def get_recv_money(request):
         env_qs = PublicEnvelope.objects.filter(id=data['id']).first()
         per_person = env_qs.per_person.split(',')
         recv_env_money = per_person[env_qs.received_total_people]
-        return JsonResponse({'status': True,'amount': recv_env_money}, status=201)
+        return JsonResponse({'status': True, 'amount': recv_env_money}, status=201)
     except Exception as e:
-        return JsonResponse({'status': False,'error': str(e)}, status=500)
+        return JsonResponse({'status': False, 'error': str(e)}, status=500)
 
 
 @require_http_methods(["POST"])
@@ -113,9 +119,10 @@ def modify_user_money(request):
 
         u_env_qs = UserEnvelope.objects.filter(csrftoken=data['csrfToken'])
         prev_total = u_env_qs.first().total
-        prev_recv_envs_ids = [] if not u_env_qs.first().received_envs_ids else u_env_qs.first().received_envs_ids.split(',')
+        prev_recv_envs_ids = [] if not u_env_qs.first().received_envs_ids else u_env_qs.first().received_envs_ids.split(
+            ',')
         prev_recv_envs_ids.append(str(data['id']))
-        u_env_qs.update(total=float(prev_total) + data['total'],received_envs_ids=','.join(prev_recv_envs_ids))
+        u_env_qs.update(total=float(prev_total) + data['total'], received_envs_ids=','.join(prev_recv_envs_ids))
 
         p_env = PublicEnvelope.objects.filter(id=data['id'])
         prev_people = p_env.first().received_total_people
@@ -125,7 +132,8 @@ def modify_user_money(request):
 
         return JsonResponse({'status': True}, status=201)
     except Exception as e:
-        return JsonResponse({'status': False,'error': str(e)}, status=500)
+        return JsonResponse({'status': False, 'error': str(e)}, status=500)
+
 
 @require_http_methods(["POST"])
 def release_envelope(request):
@@ -134,13 +142,14 @@ def release_envelope(request):
         data = json.loads(request.body)
 
         new_env = PublicEnvelope.objects.create(total=data['total'],
-                                      publisher=data['csrfToken'],
-                                      word=data['word'],
-                                      total_people=data['total_people'],
-                                      received_total_people=0,
-                                      is_completed=False,
-                                      per_person=','.join(map(str, generate_floats(data['total_people'], data['total']))),
-                                      )
+                                                publisher=data['csrfToken'],
+                                                word=data['word'],
+                                                total_people=data['total_people'],
+                                                received_total_people=0,
+                                                is_completed=False,
+                                                per_person=','.join(
+                                                    map(str, generate_floats(data['total_people'], data['total']))),
+                                                )
 
         u_env_qs = UserEnvelope.objects.filter(csrftoken=data['csrfToken'])
         prev_total = u_env_qs.first().total
@@ -148,4 +157,25 @@ def release_envelope(request):
 
         return JsonResponse({'status': True, 'id': new_env.id}, status=201)
     except Exception as e:
-        return JsonResponse({'status': False,'error': str(e)}, status=500)
+        return JsonResponse({'status': False, 'error': str(e)}, status=500)
+
+
+@require_http_methods(["POST"])
+def modify_nickname(request):
+    try:
+        data = json.loads(request.body)
+
+        new_nickname = UserEnvelope.objects.create(total=data['total'],
+                                                   publisher=data['csrfToken'],
+                                                   word=data['word'],
+                                                   total_people=data['total_people'],
+                                                   received_total_people=0,
+                                                   is_completed=False,
+                                                   per_person=','.join(
+                                                       map(str, generate_floats(data['total_people'], data['total']))),
+                                                   )
+
+        return JsonResponse({'status': True}, status=201)
+
+    except Exception as e:
+        return JsonResponse({'status': False, 'error': str(e)}, status=500)
