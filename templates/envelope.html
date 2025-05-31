@@ -72,10 +72,9 @@
             grid-gap: 30px;
         }
 
-        /* 新增标题样式 */
         .redpacket-title {
             position: absolute;
-            top: 25%; /* 调整这个值，偏上或偏下 */
+            top: 10%;
             left: 50%;
             transform: translateX(-50%);
             font-size: 1.7rem;
@@ -407,8 +406,8 @@
             </div>
 
             <div class="redpacket-container">
-                <div class="redpacket-title active" id="title"></div>
                 <div class="red-packet" onclick="claimRedPacket()">
+                    <div class="redpacket-title active" id="title"></div>
                     <div class="recv-box">
                         <div id="open-btn" class="open-btn">领</div>
                         <div id="spinner-container" style="display: none">
@@ -576,7 +575,7 @@
                 document.getElementById('balance').textContent = (balance - total).toFixed(2);
                 balance = parseFloat(document.getElementById('balance').textContent);
 
-                changeType(response.id);
+                await changeType(response.id);
             }
         }
 
@@ -598,15 +597,11 @@
             }
         }
 
-        function changeType(id) {
+        async function changeType(id) {
             currentId = id;
             const title = document.getElementById('title');
             const items = document.querySelectorAll('.list-item');
 
-            // 更新标题为对应红包名称
-            title.textContent = envs_data[id].name;
-
-            // 切换选中状态
             items.forEach(item => {
                 const itemId = item.getAttribute('data-id');
                 item.classList.remove('active');
@@ -614,6 +609,11 @@
                     item.classList.add('active');
                 }
             });
+
+            title.classList.remove('active');
+            await new Promise(resolve => setTimeout(resolve, 100));
+            title.classList.add('active');
+            title.textContent = envs_data[id].name;
         }
 
         function showToast(state, tip) {
