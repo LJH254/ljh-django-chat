@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from PChat.models import UserEnvelope, PublicEnvelope
+from PChat.models import Users, PublicEnvelope
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.http import require_http_methods
 from random import uniform
@@ -19,8 +19,12 @@ def password(request):
                ('生意不是你这样做的', '生意不是你这样做的。'),
                ('那它要是不熟怎么办？', '那它要是不熟怎么办')
                ]
-        if post_data.get('pwd_1') in pwd[0] and post_data.get('pwd_2') in pwd[1] and post_data.get('pwd_3') in pwd[
-            2] and post_data.get('pwd_4') in pwd[3]:
+        if (
+                post_data.get('pwd_1') in pwd[0] and
+                post_data.get('pwd_2') in pwd[1] and
+                post_data.get('pwd_3') in pwd[2] and
+                post_data.get('pwd_4') in pwd[3]
+        ):
             request.session['is_authenticated'] = True
             return redirect('/chat/')
             # return HttpResponse('OK!')
@@ -41,7 +45,7 @@ def homepage(request):
     request.session.set_expiry(0)
     return render(request, 'chat_base.html', {
         'csrfToken': csrftoken,
-        'input_nickname': not UserEnvelope.objects.filter(csrftoken=csrftoken).first()
+        'input_nickname': not Users.objects.filter(csrftoken=csrftoken).first()
     })
 
 
@@ -64,7 +68,7 @@ def envelope(request):
     if not request.session.get('is_authenticated', False):
         return redirect('/')
 
-    user_env_qs = UserEnvelope.objects.filter(csrftoken=csrftoken).first()
+    user_env_qs = Users.objects.filter(csrftoken=csrftoken).first()
     public_env_qs = PublicEnvelope.objects.all()
 
     if not user_env_qs:  # 用户第一次访问此页面
@@ -117,7 +121,7 @@ def modify_user_money(request):
         # 解析前端发送的 JSON 数据
         data = json.loads(request.body)
 
-        u_env_qs = UserEnvelope.objects.filter(csrftoken=data['csrfToken'])
+        u_env_qs = Users.objects.filter(csrftoken=data['csrfToken'])
         prev_total = u_env_qs.first().total
         prev_recv_envs_ids = [] if not u_env_qs.first().received_envs_ids else u_env_qs.first().received_envs_ids.split(
             ',')
@@ -152,7 +156,7 @@ def release_envelope(request):
                                                 )
                                                 )
 
-        u_env_qs = UserEnvelope.objects.filter(csrftoken=data['csrfToken'])
+        u_env_qs = Users.objects.filter(csrftoken=data['csrfToken'])
         prev_total = u_env_qs.first().total
         u_env_qs.update(total=float(prev_total) - data['total'])
 
@@ -166,7 +170,7 @@ def modify_nickname(request):
     try:
         data = json.loads(request.body)
 
-        UserEnvelope.objects.create(csrftoken=data['csrfToken'],
+        Users.objects.create(csrftoken=data['csrfToken'],
                                     total=0,
                                     received_envs_ids='',
                                     nickname=data['nickname']

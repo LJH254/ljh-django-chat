@@ -21,6 +21,7 @@
             return cookieValue ? decodeURIComponent(cookieValue) : null;
         }
 
+        let csrfToken = "{{ csrfToken }}";
         let socket;
         let AncModal;
         let NMModal;
@@ -40,7 +41,6 @@
                 const chatHistory = document.getElementById("chatHistory");
                 const MessageElement = document.createElement("div");
                 const msg = JSON.parse(event.data);
-                const csrfToken = "{{ csrfToken }}";
                 const audio = document.getElementById("msgAudio");
 
                 if (!isFirst) {
@@ -78,7 +78,6 @@
         // 发送消息给服务器
         function sendMessage() {
             const message = document.getElementById("userMessage").value;
-            const csrfToken = "{{ csrfToken }}";  // 获取 CSRF Token
 
             // 构造消息对象
             const messageData = {
@@ -129,7 +128,7 @@
         async function m_nickname() {
             const nickname = document.getElementById('nickname').value;
             const response = await FetchData(`//${window.location.host}/api/modify_nickname`,{
-                csrfToken: "{{ csrfToken }}",
+                csrfToken: csrfToken,
                 nickname: nickname
             });
             if (!response.status) showToast(response.status,

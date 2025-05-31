@@ -1,7 +1,7 @@
 from django.db import models
 
 
-class UserEnvelope(models.Model):
+class Users(models.Model):
     csrftoken = models.CharField(verbose_name='CSRF令牌',primary_key=True, max_length=50)
     total = models.DecimalField(verbose_name='账户余额',
                                 max_digits=10,

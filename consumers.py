@@ -50,13 +50,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
         )
 
     async def chat_message(self, event):
-        if self.channel_name == event['sender_channel']:
-            return
-
         # 处理群组发送的消息
         message = event['message']
         csrftoken = event['csrf_token']
         chat_history.append([csrftoken, message])
+
+        if self.channel_name == event['sender_channel']:
+            return
+
         await self.send(text_data=json.dumps({
             'csrf_token': csrftoken,
             'message': message
