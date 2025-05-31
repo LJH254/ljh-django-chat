@@ -171,10 +171,10 @@ def modify_nickname(request):
         data = json.loads(request.body)
 
         Users.objects.create(csrftoken=data['csrfToken'],
-                                    total=0,
-                                    received_envs_ids='',
-                                    nickname=data['nickname']
-                                    )
+                             total=0,
+                             received_envs_ids='',
+                             nickname=data['nickname']
+                             )
 
         return JsonResponse({'status': True}, status=201)
 
