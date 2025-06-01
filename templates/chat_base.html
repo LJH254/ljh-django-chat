@@ -4,403 +4,78 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <link rel="shortcut icon" href="{% static 'favicon.ico' %}" type="image/x-icon">
+    <link rel="icon" href="{% static 'favicon.ico' %}" type="image/x-icon">
     <title>聊天小网站 | Made by LJH</title>
 
-    <!-- 引入 Bootstrap CSS -->
-    <link rel="stylesheet" href="{% static 'plugins/bootstrap-5.1.3-dist/css/bootstrap.css' %}">
     <script src="{% static 'plugins/bootstrap-5.1.3-dist/js/bootstrap.bundle.min.js' %}"></script>
+    <link rel="stylesheet" href="{% static 'plugins/bootstrap-5.1.3-dist/css/bootstrap.css' %}">
     <link rel="stylesheet" href="{% static 'css/font_awesome/all.css' %}"/>
     <link rel="stylesheet" href="{% static 'css/font_awesome/duotone-regular.css' %}"/>
+
+    <link rel="stylesheet" href="{% static 'css/utils/navigator.css' %}">
+    <link rel="stylesheet" href="{% static 'css/utils/modal.css' %}">
+    <link rel="stylesheet" href="{% static 'css/utils/sidebar.css' %}">
+    <link rel="stylesheet" href="{% static 'css/utils/toast.css' %}">
+
+    <link rel="stylesheet" href="{% static 'css/main/chat.css' %}">
+
+    <script src="{% static 'js/common.js' %}"></script>
+
     <script>
-        function getCookie(name) {
-            const cookieValue = document.cookie
-                .split('; ')
-                .find(row => row.startsWith(`${name}=`))
-                ?.split('=')[1];
-            return cookieValue ? decodeURIComponent(cookieValue) : null;
-        }
-
-        let csrfToken = "{{ csrfToken }}";
-        let socket;
-        let AncModal;
-        let NMModal;
-
-        function main() {
-            let isFirst = true;
-            // 创建 WebSocket 连接
-            socket = new WebSocket(`ws://${window.location.host}/ws/chat/`);
-
-            // WebSocket 连接打开后
-            socket.onopen = function() {
-                console.log('WebSocket connection established');
-            };
-
-            // WebSocket 接收到消息时
-            socket.onmessage = function(event) {
-                const chatHistory = document.getElementById("chatHistory");
-                const MessageElement = document.createElement("div");
-                const msg = JSON.parse(event.data);
-                const audio = document.getElementById("msgAudio");
-
-                if (!isFirst) {
-                    audio.play(); // 播放消息提示音
-                }
-                isFirst = false;
-
-                MessageElement.style.animation = "messagePop 0.3s ease-out";
-
-                if (msg['csrf_token'] === csrfToken) {
-                    MessageElement.classList.add("user-message");
-                }
-                else {
-                    MessageElement.classList.add("bot-message");
-                }
-
-                MessageElement.textContent = msg['message'];  // 显示消息
-                chatHistory.appendChild(MessageElement);
-
-                // 滚动到最新消息
-                chatHistory.scrollTop = chatHistory.scrollHeight;
-            };
-
-            // 错误处理
-            socket.onerror = function(error) {
-                console.error('WebSocket Error: ', error);
-            };
-
-            // 连接关闭时
-            socket.onclose = function() {
-                console.log('WebSocket connection closed');
-            };
-        }
-
-        // 发送消息给服务器
-        function sendMessage() {
-            const message = document.getElementById("userMessage").value;
-
-            // 构造消息对象
-            const messageData = {
-                message: message,
-                csrfToken: csrfToken  // 添加 CSRF Token
-            };
-
-            // 发送消息到 WebSocket 服务端
-            socket.send(JSON.stringify(messageData));
-
-            // 显示用户发送的消息
-            const chatHistory = document.getElementById("chatHistory");
-            const userMessageElement = document.createElement("div");
-
-            userMessageElement.style.animation = "messagePop 0.3s ease-out";
-
-            userMessageElement.classList.add("user-message");
-            userMessageElement.textContent = message;  // 显示用户的消息
-            chatHistory.appendChild(userMessageElement);
-
-            // 滚动到最新消息
-            chatHistory.scrollTop = chatHistory.scrollHeight;
-
-            // 清空输入框
-            document.getElementById("userMessage").value = '';
-        }
-
-        async function FetchData(path, body) {
-            const response = await fetch(path, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': getCookie('csrftoken'),
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                body: JSON.stringify(body)
-            })
-            return await response.json();
-        }
-
-        function showToast(state, tip) {
-            document.getElementById('toastIcon').innerHTML = state ? '<i class="fa-solid fa-circle-check fa-lg" style="color: green;"></i>' :
-                '<i class="fa-solid fa-circle-xmark fa-lg" style="color: red;"></i>';
-            document.getElementById('toastText').innerHTML = tip;
-            toast.show();
-        }
-
-        async function m_nickname() {
-            const nickname = document.getElementById('nickname').value;
-            const response = await FetchData(`//${window.location.host}/api/modify_nickname`,{
-                csrfToken: csrfToken,
-                nickname: nickname
-            });
-            if (!response.status) showToast(response.status,
-                `操作遇到错误，错误信息：<br>${response.error}<br>请联系站长解决。`
-            );
-        }
-
-        // 侧边栏控制逻辑
-        document.addEventListener('DOMContentLoaded', function() {
-            AncModal = new bootstrap.Modal(document.getElementById('AncModal'));
-            NMModal = new bootstrap.Modal(document.getElementById('NMModal'));
-            document.querySelector('.sidebar-toggle').addEventListener('click', function() {
-                document.querySelector('.sidebar').classList.toggle('active');
-            });
-
-            document.getElementById('AncModal').addEventListener('hidden.bs.modal', main);
-            {% if input_nickname %}
-                NMModal.show();
-                document.getElementById('NMModal').addEventListener('hidden.bs.modal', () => {
-                    AncModal.show();
-                })
-                document.getElementById('nickname').addEventListener('input', function (e) {
-                    const nm_c_btn = document.getElementById('NM-btn-complete');
-                    nm_c_btn.disabled = e.target.value.trim() === '';
-                });
-            {% else %}
-                AncModal.show();
-            {% endif %}
-        });
+        const csrfToken = "{{ csrfToken }}";
+        const input_nickname = {% if input_nickname %}true{% else %}false{% endif %};
     </script>
 
-    <style>
-        body, html {
-            width: 100%;
-            height: 100%;
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background-color: #f0f0f0;
-        }
+    <script src="{% static 'js/main/chat.js' %}"></script>
 
-        /* 新增侧边栏样式 */
-        .sidebar {
-            position: fixed;
-            left: -250px;
-            top: 0;
-            width: 250px;
-            height: 100%;
-            background: rgba(255, 255, 255, 0.94);
-            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
-            transition: left 0.3s;
-            z-index: 1000;
-            padding-top: 60px; /* 确保侧边栏内容不被折叠按钮挡住 */
-        }
-
-        .sidebar.active {
-            left: 0;
-        }
-
-        .sidebar-content {
-            padding: 12px;
-        }
-
-        .sidebar-link {
-            display: block;
-            padding: 12px;
-            color: #333;
-            text-decoration: none;
-            border-radius: 4px;
-            margin-bottom: 9px;
-            transition: background-color 0.2s;
-        }
-
-        .sidebar-link-now {
-            border: 2px solid #adadad;
-        }
-
-        .sidebar-link:hover {
-            background-color: #ededed;
-        }
-
-        .sidebar-toggle {
-            position: fixed;
-            left: 10px;
-            top: 10px; /* 调整按钮的位置，向下偏移 */
-            z-index: 1001;
-            padding: 8px 15px;
-            background: white;
-            color: black;
-            border: 1px solid #ccc;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 20px;
-            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
-        }
-
-        .chat-container {
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-end;
-            align-items: center;
-            width: 420px;
-            max-width: 500px;  /* 增加聊天框的最大宽度 */
-            height: 520px;
-            border: 1px solid #ddd;
-            border-radius: 10px;
-            padding: 20px;
-            background-color: #f9f9f9;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        .chat-history {
-            flex-grow: 1;
-            overflow-y: auto;
-            width: 100%;
-            margin-bottom: 10px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .user-message, .bot-message {
-            display: inline-block;
-            max-width: 80%;
-            padding: 10px;
-            word-wrap: break-word;
-        }
-
-        .user-message {
-            text-align: right;
-            align-self: flex-end;
-        }
-
-        .bot-message {
-            text-align: left;
-            align-self: flex-start;
-        }
-
-        .user-message {
-            background: linear-gradient(135deg, #cce5ff, #cce5ff66);
-            border-radius: 15px 15px 0 15px;
-        }
-
-        .bot-message {
-            background: linear-gradient(135deg, #f0f0f0, #e2e3e5);
-            border-radius: 15px 15px 15px 0;
-        }
-
-        .system-message {
-            align-self: center;
-            background: rgba(0,0,0,0.1);
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 0.9em;
-        }
-
-        @keyframes messagePop {
-            0% { transform: scale(0.8); opacity: 0; }
-            100% { transform: scale(1); opacity: 1; }
-        }
-
-        .input-container {
-            display: flex;
-            width: 100%;
-        }
-
-        .input-container input {
-            flex-grow: 1;
-            margin-right: 10px;
-            padding: 10px;
-            font-size: 0.9rem;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-
-        .input-container button {
-            padding: 10px;
-            font-size: 0.9rem;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        .input-container button:hover {
-            background-color: #45a049;
-        }
-
-        input {
-            width: 100%;
-            height: 2.5rem;
-        }
-
-        @media (max-width: 768px) {
-            .chat-container {
-                width: 55%;
-                max-width: 65%;
-            }
-        }
-        
-        @media (max-width: 550px) {
-            .chat-container {
-                width: 75%;
-                max-width: 85%;
-            }
-        }
-
-        .i-margin {
-            margin-right: 5px;
-        }
-
-        .modal-header {
-            padding: 0.7rem;
-        }
-
-        .btn-close {
-            width: auto;
-            height: auto;
-            margin-right: 3px !important;
-        }
-
-        .modal-body p {
-            font-size: 1rem;
-            margin-bottom: 0;
-        }
-
-        .custom-toast {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 1100;
-            animation-fill-mode: forwards;
-        }
-
-        .toast-body {
-            display: grid;
-            grid-template-columns: 1fr 6fr;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes fadeOut {
-            from { opacity: 1; transform: translateY(0); }
-            to { opacity: 0; transform: translateY(-20px); }
-        }
-    </style>
 </head>
 <body>
+    <nav class="navbar navbar-expand-lg">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                <i class="fa-solid fa-comments" style="color: #02a102;"></i>
+                聊天小网站
+            </a>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a href="/chat/" class="nav-link active">
+                            <i class="fa-duotone fa-regular fa-house"></i>
+                            <span>主页</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/envelope/" class="nav-link">
+                            <i class="fa-duotone fa-regular fa-envelope"></i>
+                            <span>抢红包</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a data-bs-toggle="modal" data-bs-target="#phoneModal" class="nav-link" style="cursor: pointer;">
+                            <i class="fa-duotone fa-regular fa-phone"></i>
+                            <span>视频通话</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
     <div class="sidebar">
-        <div class="sidebar-content">
-            <a href="/chat/" class="sidebar-link sidebar-link-now">
-                <i class="fa-duotone fa-regular fa-house i-margin"></i>
-                主页
-            </a>
-            <a href="/envelope/" class="sidebar-link">
-                <i class="fa-duotone fa-regular fa-envelope i-margin"></i>
-                抢红包
-            </a>
-            <a data-bs-toggle="modal" data-bs-target="#phoneModal" style="cursor: pointer;" class="sidebar-link">
-                <i class="fa-duotone fa-regular fa-phone i-margin"></i>
-                视频通话
-            </a>
+        <div class="sidebar">
+            <div class="sidebar-content">
+                <a href="/chat/" class="sidebar-link">
+                    <i class="fa-duotone fa-regular fa-house i-margin"></i>
+                    主页
+                </a>
+                <a href="/envelope/" class="sidebar-link sidebar-link-now">
+                    <i class="fa-duotone fa-regular fa-envelope i-margin"></i>
+                    抢红包
+                </a>
+            </div>
         </div>
     </div>
 
-    <!-- 侧边栏开关按钮 -->
     <button class="sidebar-toggle">
         <i class="fa-solid fa-bars fa-xs"></i>
     </button>
@@ -409,7 +84,7 @@
         <source src="{% static 'sound/ding.wav' %}" type="audio/mpeg">
     </audio>
 
-    <div class="container" style="display: flex;align-items: center;justify-content: center;">
+    <div class="container" style="display: flex; flex: 1; align-items: center; justify-content: center;">
         <div class="toast-container custom-toast">
             <div id="tipToast" style="animation: fadeIn 0.3s;border-radius: 12px;" class="toast align-items-center bg-white" role="alert" aria-live="assertive" aria-atomic="true">
                 <div class="d-flex">
@@ -421,15 +96,13 @@
                             <!-- 这里填充提示 -->
                         </div>
                     </div>
-                    <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                    <button type="button" class="btn-close toast-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
                 </div>
             </div>
         </div>
 
         <div class="chat-container">
-            <div class="chat-history" id="chatHistory">
-
-            </div>
+            <div class="chat-history" id="chatHistory"></div>
 
             <form onsubmit="event.preventDefault(); sendMessage();" style="width: 100%">
                 {% csrf_token %}
@@ -461,7 +134,7 @@
                                 界面有所优化，修复了部分bug。
                             </li>
                             <li>
-                                增加红包领取系统（详见侧边栏“红包”按钮）。用户不仅可以领取红包（余额可用于进行视频通话），还可以自行发布红包。
+                                增加红包领取系统（详见侧边栏"红包"按钮）。用户不仅可以领取红包（余额可用于进行视频通话），还可以自行发布红包。
                             </li>
                         </ol>
                         功能预告：下一版本中会增加视频通话功能。
@@ -481,7 +154,11 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body" style="padding: 1.1rem;">
-
+                        <div class="text-center">
+                            <i class="fa-solid fa-video fa-3x mb-3" style="color: #0d6efd;"></i>
+                            <h5>视频通话功能</h5>
+                            <p class="text-muted">该功能将在下一版本中推出，敬请期待！</p>
+                        </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-primary" id="btn-complete" data-bs-dismiss="modal">完成</button>

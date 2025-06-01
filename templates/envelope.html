@@ -4,320 +4,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="icon" href="{% static 'favicon.ico' %}" type="image/x-icon">
     <title>红包账户界面</title>
     <link href="{% static 'plugins/bootstrap-5.1.3-dist/css/bootstrap.min.css' %}" rel="stylesheet">
     <script src="{% static 'js/jquery-3.6.0.min.js' %}"></script>
     <script src="{% static 'plugins/bootstrap-5.1.3-dist/js/bootstrap.bundle.min.js' %}"></script>
     <link rel="stylesheet" href="{% static 'css/font_awesome/all.css' %}"/>
     <link rel="stylesheet" href="{% static 'css/font_awesome/duotone-regular.css' %}"/>
-    <style>
-        /* 新增侧边栏样式 */
-        .sidebar {
-            position: fixed;
-            left: -250px;
-            top: 0;
-            width: 250px;
-            height: 100%;
-            background: rgba(255, 255, 255, 0.94);
-            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
-            transition: left 0.3s;
-            z-index: 1000;
-            padding-top: 60px; /* 确保侧边栏内容不被折叠按钮挡住 */
-        }
 
-        .sidebar.active {
-            left: 0;
-        }
+    <link rel="stylesheet" href="{% static 'css/utils/navigator.css' %}">
+    <link rel="stylesheet" href="{% static 'css/utils/modal.css' %}">
+    <link rel="stylesheet" href="{% static 'css/utils/sidebar.css' %}">
+    <link rel="stylesheet" href="{% static 'css/utils/toast.css' %}">
 
-        .sidebar-content {
-            padding: 12px;
-        }
+    <link rel="stylesheet" href="{% static 'css/main/envelope.css' %}">
 
-        .sidebar-link {
-            display: block;
-            padding: 12px;
-            color: #333;
-            text-decoration: none;
-            border-radius: 4px;
-            margin-bottom: 9px;
-            transition: background-color 0.2s;
-        }
+    <script src="{% static 'js/common.js' %}"></script>
 
-        .sidebar-link-now {
-            border: 2px solid #adadad;
-        }
+    <script>
+        const csrfToken = "{{ csrfToken }}";
+        const envs_data = {{ envs_data|safe }};
+    </script>
 
-        .sidebar-link:hover {
-            background-color: #ededed;
-        }
-
-        .sidebar-toggle {
-            position: fixed;
-            left: 10px;
-            top: 10px; /* 调整按钮的位置，向下偏移 */
-            z-index: 1001;
-            padding: 8px 15px;
-            background: white;
-            color: black;
-            border: 1px solid #ccc;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 20px;
-            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
-        }
-
-         .main-content {
-            display: grid;
-            grid-template-columns: 1fr 2fr;
-            grid-gap: 30px;
-        }
-
-        .redpacket-title {
-            position: absolute;
-            top: 10%;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 1.7rem;
-            color: #f3f3f3;
-            white-space: nowrap;
-            opacity: 0;
-            transition: opacity 0.3s;
-            z-index: 2; /* 确保标题在红包上层 */
-        }
-
-        .redpacket-title.active {
-            opacity: 1;
-        }
-
-        .list-container {
-            border: 2px solid #dee2e6;
-            border-radius: 15px;
-            padding: 20px;
-            background: #e7f8ff;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            width: 100%;
-            height: calc(100vh - 205px);
-            overflow-y: auto;
-        }
-
-        .redpacket-container {
-            position: relative;
-            place-items: center;
-            height: 100%;
-        }
-
-        .red-packet {
-            width: 300px;
-            height: 400px;
-            background: #ff4444;
-            border-radius: 20px;
-            position: relative;
-            cursor: pointer;
-            transition: transform 0.3s;
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-        }
-
-
-        .list-item {
-            border-radius: 15px !important;
-            margin-bottom: 10px;
-            padding: 0.9rem;
-            transition: all 0.3s;
-            cursor: pointer;
-        }
-
-        /* 选中状态样式 */
-        .list-item.active {
-            background: #bef0fd !important;
-            color: #676666 !important;
-        }
-
-        .list-item.disabled {
-            background: #ddd !important;
-            color: #676666 !important;
-        }
-
-        .list-item:hover {
-            background-color: #ededed;
-        }
-
-        .list-item small {
-            font-size: 0.7rem;
-            font-weight: 500;
-            margin-left: 2px;
-        }
-
-        .list-item label {
-            font-size: 0.8rem;
-            font-weight: 500;
-            margin-left: 5px;
-            color: #00987f !important;
-        }
-
-        .balance-box {
-            padding: 15px 25px;
-            border: 2px solid #4CAF50;
-            border-radius: 15px;
-            background: #f8f9fa;
-            width: 100%;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        .recv-box {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-        }
-
-        .open-btn {
-            font-size: 2rem;
-            background: gold;
-            border-radius: 50%;
-            width: 80px;
-            height: 80px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 3px solid #ffd700;
-        }
-
-        .divider {
-            border-top: 3px solid #dee2e6;
-            margin: 20px 0;
-        }
-
-        .modal {
-            text-align: center;
-            padding: 0 !important;
-        }
-
-        .modal:before {
-            content: '';
-            display: inline-block;
-            height: 100%;
-            vertical-align: middle;
-            margin-right: -4px; /* 微调对齐 */
-        }
-
-        .modal-dialog {
-            display: inline-block;
-            text-align: left;
-            vertical-align: middle;
-        }
-
-        /* 响应式宽度设置 */
-        @media (min-width: 768px) {
-            .modal-dialog {
-                width: 600px;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .redpacket-title {
-                font-size: 1.2rem;
-            }
-
-            .red-packet {
-                width: 78%;
-            }
-
-            .list-container {
-                width: 110%;
-            }
-        }
-
-        .i-margin {
-            margin-right: 5px;
-        }
-
-        #spinner-container {
-            width: 80px;
-            padding-left: 10px;
-            padding-right: 10px;
-        }
-
-        .spinner {
-            width: 60px;
-            height: 60px;
-            position: relative;
-        }
-
-        .spinner::before {
-            content: "";
-            position: absolute;
-            inset: 0;
-            border-radius: 50%;
-            padding: 6px;
-            background: conic-gradient(from 210deg at 50% 50%, rgba(74, 144, 226, 0) 0deg, #4a90e2 160deg, rgba(74, 144, 226, 0) 220deg);
-            mask: linear-gradient(360deg, #fff, #fff) content-box, linear-gradient(360deg, #fff, #fff);
-            mask-composite: exclude;
-            animation: rotate 0.8s linear infinite;
-        }
-
-        @keyframes rotate {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-
-        .modal-header {
-            padding: 0.7rem;
-        }
-
-        .custom-toast {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 1100;
-            animation-fill-mode: forwards;
-        }
-
-        .toast-body {
-            display: grid;
-            grid-template-columns: 1fr 6fr;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes fadeOut {
-            from { opacity: 1; transform: translateY(0); }
-            to { opacity: 0; transform: translateY(-20px); }
-        }
-
-        .release-btn {
-            padding: 10px 20px;
-            margin-top: 10px;
-            border: none;
-            border-radius: 10px;
-            background-color: #4CAF50;
-            margin-right: 10px;
-        }
-
-        .release-btn:hover {
-            background-color: #45a049;
-        }
-
-        .release-btn:focus {
-            background-color: #4CAF50;
-            border-color: #4CAF50;
-        }
-
-        label {
-            margin-right: 6px;
-        }
-
-        .required {
-            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.25);
-        }
-    </style>
+    <script src="{% static 'js/main/envelope.js' %}"></script>
 </head>
 <body>
-    <!-- 新增侧边栏 -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                <i class="fa-solid fa-comments" style="color: #02a102;"></i>
+                聊天小网站
+            </a>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a href="/chat/" class="nav-link">
+                            <i class="fa-duotone fa-regular fa-house"></i>
+                            <span>主页</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/envelope/" class="nav-link active">
+                            <i class="fa-duotone fa-regular fa-envelope"></i>
+                            <span>抢红包</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a data-bs-toggle="modal" data-bs-target="#phoneModal" class="nav-link" style="cursor: pointer;">
+                            <i class="fa-duotone fa-regular fa-phone"></i>
+                            <span>视频通话</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
     <div class="sidebar">
         <div class="sidebar-content">
             <a href="/chat/" class="sidebar-link">
@@ -348,7 +90,7 @@
                             <!-- 这里填充提示 -->
                         </div>
                     </div>
-                    <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                    <button type="button" class="btn-close toast-close m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
                 </div>
             </div>
         </div>
@@ -419,7 +161,7 @@
 
             <!-- 弹窗结构 -->
             <div class="modal fade" id="EnvModal" tabindex="-1" style="color: #000;" aria-labelledby="TitleLabel" aria-hidden="true">
-                <div class="modal-dialog">
+                <div class="modal-dialog modal-dialog-centered">
                     <div class="modal-content" style="box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);">
                         <div class="modal-header">
                             <h5 class="modal-title" id="TitleLabel" style="margin-left: 8px;font-size: 1rem;">领取红包</h5>
@@ -475,303 +217,28 @@
                     </div>
                 </div>
             </div>
+
+            <div class="modal fade" id="phoneModal" tabindex="-1" style="color: #000;" aria-labelledby="PhoneTitleLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content" style="box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="PhoneTitleLabel" style="margin-left: 8px;font-size: 1rem;">发起通话</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body" style="padding: 1.1rem;">
+                            <div class="text-center">
+                                <i class="fa-solid fa-video fa-3x mb-3" style="color: #0d6efd;"></i>
+                                <h5>视频通话功能</h5>
+                                <p class="text-muted">该功能将在下一版本中推出，敬请期待！</p>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-primary" id="btn-complete" data-bs-dismiss="modal">完成</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-
-    <script>
-        function getCookie(name) {
-            const cookieValue = document.cookie
-                .split('; ')
-                .find(row => row.startsWith(`${name}=`))
-                ?.split('=')[1];
-            return cookieValue ? decodeURIComponent(cookieValue) : null;
-        }
-
-        async function modify() {
-            isFinished = true;
-
-            const response = await FetchData(`//${window.location.host}/api/modify_user_money`,{
-                csrfToken: "{{ csrfToken }}",
-                total: parseFloat(document.getElementById('tip').textContent),
-                id: currentId
-            });
-
-            showToast(response.status, response.status ? '操作成功！' :
-                `操作遇到错误，错误信息：<br>${response.error}<br>请联系站长解决。`);
-
-            if (response.status) {
-                const people_amt_el = document.querySelectorAll('.people-amt');
-                people_amt_el[currentId - 1].textContent = `${envs_data[currentId].recv_people + 1}/${envs_data[currentId].people}人`;
-                document.getElementById('balance').textContent = (balance + parseFloat(window.current_env_amt)).toFixed(2);
-                balance = parseFloat(document.getElementById('balance').textContent);
-            }
-
-            document.querySelectorAll('.list-item')[currentId - 1].classList.remove('active');
-            document.querySelectorAll('.list-item')[currentId - 1].classList.add('disabled');
-            envs_data[currentId].is_in = true;
-            auto_select();
-        }
-
-        function checkFormValidity() {
-            let isFormValid = true;
-
-            document.querySelectorAll('.required').forEach(element => {
-                if (element.type === 'text') {
-                    if (element.value.trim() === '') isFormValid = false;
-                }
-            });
-
-            document.getElementById('release-btn-complete').disabled = !isFormValid;
-        }
-
-        async function release_env() {
-            isFinished = true;
-            const total = parseFloat(document.getElementById('total').value);
-            const total_people = parseInt(document.getElementById('total_people').value);
-            const word = document.getElementById('word').value;
-
-            if (balance < total) {
-                showToast(false, '余额不足！')
-                return
-            }
-
-            const response = await FetchData(`//${window.location.host}/api/release_envelope`,{
-                csrfToken: "{{ csrfToken }}",
-                total: total,
-                total_people: total_people,
-                word: word
-            });
-
-            showToast(response.status, response.status ? '操作成功！' :
-                `操作遇到错误，错误信息：<br>${response.error}<br>请联系站长解决。`);
-
-            if (response.status) {
-                releaseModal.hide();
-
-                document.querySelector('.list-group').innerHTML += `
-<a class="list-group-item list-item" data-id="${response.id}" onclick="changeType(${response.id})">
-    <div class="d-flex w-100 justify-content-between">
-        <p class="mb-1">你发布的红包</p>
-    </div>
-    <small class="text-muted">${total}元</small>
-    <label class="text-muted people-amt">0/${total_people}人</label>
-</a>
-`
-                envs_data[response.id] = {
-                    name: word,
-                    amount: total,
-                    people: total_people,
-                    recv_people: 0,
-                    is_completed: false,
-                    is_in: false
-                };
-
-                document.querySelectorAll('.required').forEach(element => {
-                    element.value = '';
-                });
-
-                document.getElementById('release-btn-complete').disabled = true;
-
-                document.getElementById('balance').textContent = (balance - total).toFixed(2);
-                balance = parseFloat(document.getElementById('balance').textContent);
-
-                await changeType(response.id);
-            }
-        }
-
-        function auto_select() {
-            let has_available = false;
-
-            Object.keys(envs_data).some(id => {
-                if (!(envs_data[id].is_completed || envs_data[id].is_in)) {
-                    changeType(id);
-                    has_available = true;
-                    return true;
-                }
-            });
-
-            if (has_available) {
-                document.querySelector('.redpacket-container').style.display = 'grid';
-            } else {
-                document.querySelector('.redpacket-container').style.display = 'none';
-            }
-        }
-
-        async function changeType(id) {
-            currentId = id;
-            const title = document.getElementById('title');
-            const items = document.querySelectorAll('.list-item');
-
-            items.forEach(item => {
-                const itemId = item.getAttribute('data-id');
-                item.classList.remove('active');
-                if (itemId === id.toString()) {
-                    item.classList.add('active');
-                }
-            });
-
-            title.classList.remove('active');
-            await new Promise(resolve => setTimeout(resolve, 100));
-            title.classList.add('active');
-            title.textContent = envs_data[id].name;
-        }
-
-        function showToast(state, tip) {
-            document.getElementById('toastIcon').innerHTML = state ? '<i class="fa-solid fa-circle-check fa-lg" style="color: green;"></i>' :
-                '<i class="fa-solid fa-circle-xmark fa-lg" style="color: red;"></i>';
-            document.getElementById('toastText').innerHTML = tip;
-            toast.show();
-        }
-
-        async function FetchData(path, body) {
-            const response = await fetch(path, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': getCookie('csrftoken'),
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                body: JSON.stringify(body)
-            })
-            return await response.json();
-        }
-
-        async function claimRedPacket() {
-            const open_button = document.getElementById('open-btn');
-            const spinner = document.getElementById('spinner-container');
-            const tip = document.getElementById('tip');
-            const close = document.getElementById('btn-close');
-            const btn_complete = document.getElementById('btn-complete');
-            const EnvModal = new bootstrap.Modal(document.getElementById('EnvModal'));
-
-            const env_money = envs_data[currentId].amount;
-            const people = envs_data[currentId].people;
-            const min = 0.01, max = env_money / people;
-
-            open_button.style.display = "none";
-            spinner.style.display = "";
-
-            const recv_env_money_resp = await FetchData(`//${window.location.host}/api/get_recv_money`, {id: currentId});
-
-            if (!recv_env_money_resp.status) {
-                showToast(false, `操作遇到错误，错误信息：<br>${recv_env_money_resp.error}<br>请联系站长解决。`);
-                open_button.style.display = "";
-                spinner.style.display = "none";
-                return;
-            }
-
-            window.current_env_amt = recv_env_money_resp.amount;
-
-            open_button.style.display = "";
-            spinner.style.display = "none";
-            close.disabled = true;
-            btn_complete.disabled = true;
-
-            EnvModal.show();
-
-            for (let i = 0; i < 19; i++) {
-                tip.textContent = (Math.random() * (max - min) + min).toFixed(2);
-                await new Promise(resolve => setTimeout(resolve, 40));
-            }
-            tip.textContent = recv_env_money_resp.amount;
-
-            close.disabled = false;
-            btn_complete.disabled = false;
-        }
-
-        // 侧边栏控制逻辑
-        document.addEventListener('DOMContentLoaded', function() {
-            document.querySelector('.sidebar-toggle').addEventListener('click', function() {
-                document.querySelector('.sidebar').classList.toggle('active');
-            });
-
-            document.querySelectorAll('.modal').forEach(modal => {
-                modal.addEventListener('hidden.bs.modal', function () {
-                    if (!isFinished) showToast(false, '操作已取消。');
-                    isFinished = false;
-                });
-            });
-
-            document.getElementById('total').type = 'text';
-
-            document.getElementById('total').addEventListener('input', function(e) {
-                let value = e.target.value;
-                // 移除所有非数字和小数点的字符，并确保最多一个小数点
-                value = value.replace(/[^0-9.]/g, '')
-                            .replace(/(\..*)\./g, '$1')
-                            .replace(/^(-|0+)/, '');
-                // 如果以小数点开头，可自动补零（可选）
-                if (value.startsWith('.')) value = '0' + value;
-
-                const parts = value.split('.');
-                if (parts.length > 1) {
-                    parts[1] = parts[1].slice(0, 2);
-                    value = parts.join('.');
-                }
-
-                e.target.value = value;
-            });
-
-            document.getElementById('total').addEventListener('blur', function(e) {
-                let value = e.target.value;
-                if (value === '') return;
-
-                // 补全两位小数（如将"5"转为"5.00"，"5.1"转为"5.10"）
-                if (!value.includes('.')) {
-                    value += '.00';
-                } else {
-                    if (/^\d+\.$/.test(value)) {
-                        value = (value === '0.') ? `${value}01` : `${value}00`;
-                    } else {
-                        if (value === '0.00') {
-                            value = '0.01'
-                        } else {
-                            const parts = value.split('.');
-                            if (parts[1].length === 1) parts[1] += '0';
-                            value = parts.join('.');
-                        }
-                    }
-                }
-
-                e.target.value = value;
-            });
-
-            document.getElementById('total_people').type = 'text';
-
-            document.getElementById('total_people').addEventListener('input', function() {
-                this.value = this.value.replace(/[^0-9]/g, '').replace(/^0+/, '');
-                if (parseInt(this.value) < 1 || this.value === '0') {
-                    this.value = '';
-                }
-            });
-
-            document.querySelectorAll('.required').forEach(element => {
-                element.addEventListener('input', checkFormValidity);  // 适用于输入框和文本框
-            });
-        });
-
-        let isFinished = false;
-        const toastEl = document.getElementById('tipToast');
-        const toast = new bootstrap.Toast(toastEl, {
-            autohide: true,
-            delay: 2000
-        });
-        const releaseModal = new bootstrap.Modal(document.getElementById('ReleaseModal'));
-
-        toastEl.addEventListener('show.bs.toast', function() {
-            toastEl.style.animation = 'fadeIn 0.3s';
-        });
-
-        toastEl.addEventListener('hide.bs.toast', function() {
-            toastEl.style.animation = 'fadeOut 0.3s';
-        });
-
-        // 改为使用ID标识
-        let currentId = 1;
-        const envs_data = {{ envs_data|safe }};
-        let balance = parseFloat(document.getElementById('balance').textContent);
-
-        auto_select();
-    </script>
 </body>
 </html>

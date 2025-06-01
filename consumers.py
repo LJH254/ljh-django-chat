@@ -18,9 +18,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
         )
         await self.accept()
 
-        msg_dict = {"csrf_token": '', "message": "（可以开始聊天了）"}
-        await self.send(json.dumps(msg_dict))
-
         for msg_list in chat_history:
             m = json.dumps({"csrf_token": msg_list[0], "message": msg_list[1]})
             await self.send(m)

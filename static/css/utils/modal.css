@@ -1,0 +1,25 @@
+/* Bootstrap Modal CSS */
+
+.modal-header {
+    padding: 0.7rem;
+}
+
+.btn-close {
+    margin-right: 3px !important;
+}
+
+.btn-close:not(.toast-close) {
+    width: auto;
+    height: auto;
+}
+
+.modal-body p {
+    font-size: 1rem;
+    margin-bottom: 0;
+}
+
+@media (min-width: 768px) {
+    .modal-dialog {
+        width: 600px;
+    }
+}
