@@ -40,9 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     _modalEls.forEach(modalEl => {
         function handleKeyDown(e) {
-            if (e.keyCode === 13 || e.key === 'Enter') {
-                modalEl.querySelector('.btn-primary').click();
-            }
+            if (e.keyCode === 13 || e.key === 'Enter') modalEl.querySelector('.btn-primary').click();
         }
 
         modalEl.addEventListener('shown.bs.modal', function () {
