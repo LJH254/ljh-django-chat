@@ -107,8 +107,8 @@
             <form onsubmit="event.preventDefault(); sendMessage();" style="width: 100%">
                 {% csrf_token %}
                 <div class="input-container">
-                    <input type="text" id="userMessage" placeholder="输入消息..." required>
-                    <button type="submit" class="btn btn-primary" style="height: 2.5rem;width: 100px">
+                    <input type="text" id="userMessage" placeholder="连接关闭，无法聊天" required disabled>
+                    <button id="btn-send" type="submit" class="btn btn-primary btn-send" style="height: 2.5rem;width: 100px" disabled>
                         <i class="fa-solid fa-paper-plane i-margin" style="color: #ffffff;"></i>
                         发送
                     </button>

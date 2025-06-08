@@ -86,18 +86,18 @@ body, html {
     border-radius: 5px;
 }
 
-.input-container button {
+.btn-send {
     padding: 10px;
     font-size: 0.9rem;
-    background-color: #4CAF50;
-    color: white;
+    background-color: #4CAF50 !important;
+    color: white !important;
     border: none;
     border-radius: 5px;
     cursor: pointer;
 }
 
 .input-container button:hover {
-    background-color: #45a049;
+    background-color: #45a049 !important;
 }
 
 input {

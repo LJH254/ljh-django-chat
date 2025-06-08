@@ -6,20 +6,24 @@ function main() {
     // 创建 WebSocket 连接
     socket = new WebSocket(`ws://${window.location.host}/ws/chat/`);
 
-    // WebSocket 连接打开后
     socket.onopen = function() {
         console.log('WebSocket connection established');
 
         const systemMessageElement = document.createElement("div");
         const chatHistory = document.getElementById("chatHistory");
+        const userMessage = document.getElementById('userMessage');
+        const btn_send = document.getElementById('btn-send');
 
         systemMessageElement.style.animation = "messagePop 0.3s ease-out";
         systemMessageElement.classList.add("system-message");
         systemMessageElement.textContent = '可以开始聊天啦！';
         chatHistory.appendChild(systemMessageElement);
+
+        userMessage.placeholder = '输入消息...';
+        userMessage.disabled = false;
+        btn_send.disabled = false;
     };
 
-    // WebSocket 接收到消息时
     socket.onmessage = function(event) {
         const chatHistory = document.getElementById("chatHistory");
         const MessageElement = document.createElement("div");
@@ -42,18 +46,30 @@ function main() {
         MessageElement.textContent = msg['message'];
         chatHistory.appendChild(MessageElement);
 
-        // 滚动到最新消息
         chatHistory.scrollTop = chatHistory.scrollHeight;
     };
 
-    // 错误处理
     socket.onerror = function(error) {
         console.error('WebSocket Error: ', error);
+        showToast(false, `连接发生错误，错误信息：<br>${error}<br>请联系站长解决。`)
     };
 
-    // 连接关闭时
     socket.onclose = function() {
         console.log('WebSocket connection closed');
+
+        const systemMessageElement = document.createElement("div");
+        const chatHistory = document.getElementById("chatHistory");
+        const userMessage = document.getElementById('userMessage');
+        const btn_send = document.getElementById('btn-send');
+
+        systemMessageElement.style.animation = "messagePop 0.3s ease-out";
+        systemMessageElement.classList.add("system-message text-danger");
+        systemMessageElement.textContent = '连接因某种原因关闭，无法聊天';
+        chatHistory.appendChild(systemMessageElement);
+
+        userMessage.placeholder = '连接关闭，无法聊天';
+        userMessage.disabled = true;
+        btn_send.disabled = true;
     };
 }
 
@@ -61,16 +77,13 @@ function main() {
 function sendMessage() {
     const message = document.getElementById("userMessage").value;
 
-    // 构造消息对象
     const messageData = {
         message: message,
-        csrfToken: csrfToken  // 添加 CSRF Token
+        csrfToken: csrfToken
     };
 
-    // 发送消息到 WebSocket 服务端
     socket.send(JSON.stringify(messageData));
 
-    // 显示用户发送的消息
     const chatHistory = document.getElementById("chatHistory");
     const userMessageElement = document.createElement("div");
 
@@ -80,10 +93,8 @@ function sendMessage() {
     userMessageElement.textContent = message;  // 显示用户的消息
     chatHistory.appendChild(userMessageElement);
 
-    // 滚动到最新消息
     chatHistory.scrollTop = chatHistory.scrollHeight;
 
-    // 清空输入框
     document.getElementById("userMessage").value = '';
 }
 
