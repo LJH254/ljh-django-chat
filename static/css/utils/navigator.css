@@ -43,21 +43,21 @@
     border: 1px solid #b8daff;
 }
 
+.navbar-nav .nav-link {
+    padding: 0.5rem 0.7rem;
+    font-size: 0.9rem;
+}
+
 .navbar-nav {
     flex-direction: row;
 }
 
-@media (min-width: 768px) {
-    .navbar-nav .nav-link {
-        padding: 0.5rem 0.7rem;
-        font-size: 0.9rem;
-    }
-    .navbar-brand {
-        font-size: 1.2rem;
-    }
+.collapse {
+    display: flex !important;
+    flex-basis: auto;
 }
 
-@media (max-width: 550px) {
+@media (max-width: 432px) {
     .navbar {
         padding: 0.5rem;
     }
@@ -67,5 +67,15 @@
     .nav-link i {
         margin-right: 0;
         font-size: 1.1rem;
+    }
+}
+
+@media (max-width: 648px) {
+    .website-name {
+        display: none;
+    }
+
+    .navbar-brand i {
+        margin-right: 0;
     }
 }

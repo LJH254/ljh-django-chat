@@ -12,8 +12,7 @@ body, html {
     flex-direction: column;
     justify-content: flex-end;
     align-items: center;
-    width: 420px;
-    max-width: 500px;
+    width: 50%;
     height: 520px;
     border: 1px solid #ddd;
     border-radius: 10px;
@@ -106,10 +105,16 @@ input {
     height: 2.5rem;
 }
 
+@media (min-width: 1200px) {
+    .chat-container {
+        width: 40%;
+        max-width: 45%;
+    }
+}
 @media (max-width: 768px) {
     .chat-container {
-        width: 55%;
-        max-width: 65%;
+        width: 65%;
+        max-width: 75%;
     }
 }
 
@@ -117,7 +122,6 @@ input {
     .chat-container {
         width: 75%;
         max-width: 85%;
-        height: 450px;
     }
 }
 

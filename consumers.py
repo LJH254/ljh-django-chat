@@ -35,6 +35,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
         message = text_data_json['message']
         csrftoken = text_data_json['csrfToken']
 
+        chat_history.append([csrftoken, message])
+
         # 广播消息到群组
         await self.channel_layer.group_send(
             self.room_group_name,
@@ -50,7 +52,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
         # 处理群组发送的消息
         message = event['message']
         csrftoken = event['csrf_token']
-        chat_history.append([csrftoken, message])
 
         if self.channel_name == event['sender_channel']:
             return

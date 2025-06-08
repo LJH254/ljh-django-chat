@@ -33,9 +33,9 @@
         <div class="container-fluid">
             <a class="navbar-brand" href="/">
                 <i class="fa-solid fa-comments" style="color: #02a102;"></i>
-                聊天小网站
+                <span class="website-name">聊天小网站</span>
             </a>
-            <div class="collapse navbar-collapse" id="navbarNav">
+            <div class="collapse navbar-collapse" id="navbarNav" style="display: flex !important;">
                 <ul class="navbar-nav ms-4">
                     <li class="nav-item">
                         <a href="/chat/" class="nav-link">
@@ -78,7 +78,7 @@
         <i class="fa-solid fa-bars fa-xs"></i>
     </button>
 
-    <div class="container mt-4">
+    <div class="container-lg mt-4">
         <div class="toast-container custom-toast">
             <div id="tipToast" style="animation: fadeIn 0.3s;border-radius: 12px;" class="toast align-items-center bg-white" role="alert" aria-live="assertive" aria-atomic="true">
                 <div class="d-flex">
@@ -105,45 +105,42 @@
 
         <div class="main-content">
             <div class="a-list-container">
-                <div style="display: inline-block;width: 70%;">
-                    <div class="list-container">
-                        <div class="list-group">
-                            <!-- 修改为4个红包选项，添加data-id属性 -->
-                            {% for envelope in public_env_qs %}
-                                {% if envelope.is_completed or envelope.id in received_envs_ids %}
-                                    <a class="list-group-item list-item disabled" data-id="{{ envelope.id }}">
-                                        <div class="d-flex w-100 justify-content-between">
-                                            {% if envelope.publisher == csrfToken %}
-                                                <p class="mb-1">你发布的红包</p>
-                                            {% else %}
-                                                <p class="mb-1">用户发布的红包</p>
-                                            {% endif %}
-                                        </div>
-                                        <small class="text-muted">{{ envelope.total }}元</small>
-                                        <label class="text-muted people-amt">{{ envelope.received_total_people }}/{{ envelope.total_people }}人</label>
-                                    </a>
-                                {% else %}
-                                    <a class="list-group-item list-item" data-id="{{ envelope.id }}" onclick="changeType({{ envelope.id }})">
-                                        <div class="d-flex w-100 justify-content-between">
-                                            {% if envelope.publisher == csrfToken %}
-                                                <p class="mb-1">你发布的红包</p>
-                                            {% else %}
-                                                <p class="mb-1">用户发布的红包</p>
-                                            {% endif %}
-                                        </div>
-                                        <small class="text-muted">{{ envelope.total }}元</small>
-                                        <label class="text-muted people-amt">{{ envelope.received_total_people }}/{{ envelope.total_people }}人</label>
-                                    </a>
-                                {% endif %}
-                            {% endfor %}
-                        </div>
+                <div class="list-container">
+                    <div class="list-group">
+                        {% for envelope in public_env_qs %}
+                            {% if envelope.is_completed or envelope.id in received_envs_ids %}
+                                <a class="list-group-item list-item disabled" data-id="{{ envelope.id }}">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        {% if envelope.publisher == csrfToken %}
+                                            <p class="mb-1">你发布的红包</p>
+                                        {% else %}
+                                            <p class="mb-1">用户发布的红包</p>
+                                        {% endif %}
+                                    </div>
+                                    <small class="text-muted">{{ envelope.total }}元</small>
+                                    <label class="text-muted people-amt">{{ envelope.received_total_people }}/{{ envelope.total_people }}人</label>
+                                </a>
+                            {% else %}
+                                <a class="list-group-item list-item" data-id="{{ envelope.id }}" onclick="changeType({{ envelope.id }})">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        {% if envelope.publisher == csrfToken %}
+                                            <p class="mb-1">你发布的红包</p>
+                                        {% else %}
+                                            <p class="mb-1">用户发布的红包</p>
+                                        {% endif %}
+                                    </div>
+                                    <small class="text-muted">{{ envelope.total }}元</small>
+                                    <label class="text-muted people-amt">{{ envelope.received_total_people }}/{{ envelope.total_people }}人</label>
+                                </a>
+                            {% endif %}
+                        {% endfor %}
                     </div>
-                    <div style="display: flex;align-items: center;justify-content: center">
-                        <button class="btn btn-primary release-btn" data-bs-toggle="modal" data-bs-target="#ReleaseModal">
-                            <i class="fa-solid fa-circle-plus"></i>
-                            发布红包
-                        </button>
-                    </div>
+                </div>
+                <div class="release-btn-container">
+                    <button class="btn btn-primary release-btn" data-bs-toggle="modal" data-bs-target="#ReleaseModal">
+                        <i class="fa-solid fa-circle-plus"></i>
+                        发布红包
+                    </button>
                 </div>
             </div>
 
