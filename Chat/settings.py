@@ -15,7 +15,6 @@ from pathlib import Path
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
@@ -26,7 +25,6 @@ SECRET_KEY = 'django-insecure-&u5^gw@2kfce91ek_(^7!#u&z*mh=@@80&lw5b*5vsppaozbor
 DEBUG = True
 
 ALLOWED_HOSTS = ['*']
-
 
 # Application definition
 
@@ -98,7 +96,6 @@ DATABASES = {
     }
 }
 
-
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
 
@@ -117,7 +114,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/4.1/topics/i18n/
 
@@ -128,7 +124,6 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 
 USE_TZ = True
-
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
@@ -141,10 +136,8 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-CORS_ALLOWED_ORIGINS =['http://*', 'https://*']
+CORS_ALLOWED_ORIGINS = ['http://*', 'https://*']
 
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
-CSRF_TRUSTED_ORIGINS = ['https://stirring-leech-shining.ngrok-free.app',
-                        'http://*.natappfree.cc',
-                        'http://ljhchat.nat300.top']
+SHARED_SECRET_KEY = 'xb(yb)7-h68yl1o=&c-+3ad7j&@s+w$6cktf1b428rm16%!r=7'
