@@ -1,6 +1,6 @@
 /* Bootstrap Toast CSS */
 
-.custom-toast {
+.toast-container {
     position: fixed;
     top: 20px;
     left: 50%;
@@ -9,7 +9,17 @@
     animation-fill-mode: forwards;
 }
 
-.toast-body {
+.toast-body:not(.custom-toast) {
     display: grid;
     grid-template-columns: 1fr 6fr;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; transform: translateY(0); }
+    to { opacity: 0; transform: translateY(-20px); }
 }

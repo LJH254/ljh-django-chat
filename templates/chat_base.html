@@ -9,8 +9,8 @@
 
     <script src="{% static 'plugins/bootstrap-5.1.3-dist/js/bootstrap.bundle.min.js' %}"></script>
     <link rel="stylesheet" href="{% static 'plugins/bootstrap-5.1.3-dist/css/bootstrap.css' %}">
-    <link rel="stylesheet" href="{% static 'css/font_awesome/all.css' %}"/>
-    <link rel="stylesheet" href="{% static 'css/font_awesome/duotone-regular.css' %}"/>
+    <link rel="stylesheet" href="{% static 'css/font_awesome/all.css' %}">
+    <link rel="stylesheet" href="{% static 'css/font_awesome/duotone-regular.css' %}">
 
     <link rel="stylesheet" href="{% static 'css/utils/navigator.css' %}">
     <link rel="stylesheet" href="{% static 'css/utils/modal.css' %}">
@@ -84,8 +84,8 @@
         <source src="{% static 'sound/ding.wav' %}" type="audio/mpeg">
     </audio>
 
-    <div class="container-lg" style="display: flex; flex: 1; align-items: center; justify-content: center;">
-        <div class="toast-container custom-toast">
+    <div class="container-lg d-flex align-items-center justify-content-center flex-grow-1" style="flex: 1;">
+        <div class="toast-container">
             <div id="tipToast" style="animation: fadeIn 0.3s;border-radius: 12px;" class="toast align-items-center bg-white" role="alert" aria-live="assertive" aria-atomic="true">
                 <div class="d-flex">
                     <div class="toast-body" id="toast-body">
@@ -101,14 +101,42 @@
             </div>
         </div>
 
+        <div class="toast-container">
+            <div id="callToast" class="toast call-toast" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="false">
+                <div class="toast-header">
+                    <span class="call-icon">
+                        <i class="fa-solid fa-phone"></i>
+                    </span>
+                    <strong class="me-auto">来电提醒</strong>
+                    <small>刚刚</small>
+                </div>
+                <div class="toast-body custom-toast">
+                    <div class="caller-info">
+                        <div id="caller-avatar" class="caller-avatar"></div>
+                        <div class="caller-details">
+                            <h5 id="caller-details"></h5>
+                        </div>
+                    </div>
+                    <div class="call-actions">
+                        <button id="acceptCall" class="btn-call btn-accept" onclick="acceptCall();">
+                            <i class="fa-solid fa-phone fa-shake"></i>
+                        </button>
+                        <button id="declineCall" class="btn-call btn-decline" onclick="declineCall();">
+                            <i class="fa-solid fa-phone-hangup"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="chat-container">
             <div class="chat-history" id="chatHistory"></div>
 
             <form onsubmit="event.preventDefault(); sendMessage();" style="width: 100%">
                 {% csrf_token %}
                 <div class="input-container">
-                    <input type="text" id="userMessage" placeholder="连接关闭，无法聊天" required disabled>
-                    <button id="btn-send" type="submit" class="btn btn-primary btn-send" style="height: 2.5rem;width: 100px" disabled>
+                    <input type="text" id="userMessage" class="input-send" placeholder="连接关闭，无法聊天" required disabled>
+                    <button id="btn-send" type="submit" class="btn btn-primary btn-send" disabled>
                         <i class="fa-solid fa-paper-plane i-margin" style="color: #ffffff;"></i>
                         发送
                     </button>
@@ -154,14 +182,30 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body" style="padding: 1.1rem;">
-                        <div class="text-center">
-                            <i class="fa-solid fa-video fa-3x mb-3" style="color: #0d6efd;"></i>
-                            <h5>视频通话功能</h5>
-                            <p class="text-muted">该功能将在下一版本中推出，敬请期待！</p>
+                        <div class="mb-3 form-group">
+                            <div class="input-group">
+                                <span class="input-group-text">选择接收方</span>
+                                <select class="form-select" id="calleeSelect">
+                                <option value="" selected>--请选择--</option>
+                                    {% for user in users %}
+                                        {% if user.csrftoken != csrfToken %}
+                                            <option value="{{ user.nickname }}">{{ user.nickname }}</option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <small class="text-muted">
+                                <i class="fa-solid fa-circle-info" style="color: #2ea4ff;"></i>
+                                提示：通话一次将消费两元，将会从发起方账户余额内扣除。
+                            </small>
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-primary" id="btn-complete" data-bs-dismiss="modal">完成</button>
+                        <button type="button" class="btn btn-primary" id="rc-btn-complete" onclick="requestCall();" disabled>
+                            <span id="rc-spinner" class="spinner-border spinner-border-sm" aria-hidden="true" style="display: none;"></span>
+                            <span id="rc-span">完成</span>
+                        </button>
                     </div>
                 </div>
             </div>

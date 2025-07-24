@@ -1,12 +1,23 @@
 from django.shortcuts import render, redirect
-from PChat.models import Users, PublicEnvelope
+from PChat.models import Users, PublicEnvelope, Calls
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.http import require_http_methods
+from django.conf import settings
 from random import uniform
 import json
+import uuid
+import jwt
+import time
+
+
+def check_secure(request):
+    if not request.is_secure():
+        return redirect(f"https://{request.get_host()}{request.path}", permanent=True)
 
 
 def password(request):
+    check_secure(request)
+
     if request.session.get('is_authenticated', False):
         return redirect('/chat/')
 
@@ -27,12 +38,13 @@ def password(request):
         ):
             request.session['is_authenticated'] = True
             return redirect('/chat/')
-            # return HttpResponse('OK!')
         return render(request, 'password.html', {'msg': '暗号错误！', 'method': 'POST'})
     return HttpResponse('Invalid method')
 
 
 def homepage(request):
+    check_secure(request)
+
     try:
         csrftoken = request.COOKIES['csrftoken']
     except KeyError as ke:  # 有时候cookies中不会夹带csrftoken键，很奇怪。此时强制刷新即可。
@@ -45,7 +57,8 @@ def homepage(request):
     request.session.set_expiry(0)
     return render(request, 'chat_base.html', {
         'csrfToken': csrftoken,
-        'input_nickname': not Users.objects.filter(csrftoken=csrftoken).first()
+        'input_nickname': not Users.objects.filter(csrftoken=csrftoken).first(),
+        'users': Users.objects.all()
     })
 
 
@@ -59,6 +72,8 @@ def generate_floats(n, total):
 
 
 def envelope(request):
+    check_secure(request)
+
     try:
         csrftoken = request.COOKIES['csrftoken']
     except KeyError as ke:  # 有时候cookies中不会夹带csrftoken键，很奇怪。此时强制刷新即可。
@@ -104,7 +119,6 @@ def envelope(request):
 @require_http_methods(["POST"])
 def get_recv_money(request):
     try:
-        # 解析前端发送的 JSON 数据
         data = json.loads(request.body)
 
         env_qs = PublicEnvelope.objects.filter(id=data['id']).first()
@@ -118,7 +132,6 @@ def get_recv_money(request):
 @require_http_methods(["POST"])
 def modify_user_money(request):
     try:
-        # 解析前端发送的 JSON 数据
         data = json.loads(request.body)
 
         u_env_qs = Users.objects.filter(csrftoken=data['csrfToken'])
@@ -142,7 +155,6 @@ def modify_user_money(request):
 @require_http_methods(["POST"])
 def release_envelope(request):
     try:
-        # 解析前端发送的 JSON 数据
         data = json.loads(request.body)
 
         new_env = PublicEnvelope.objects.create(total=data['total'],
@@ -177,6 +189,40 @@ def modify_nickname(request):
                              )
 
         return JsonResponse({'status': True}, status=201)
+
+    except Exception as e:
+        return JsonResponse({'status': False, 'error': str(e)}, status=500)
+
+
+@require_http_methods(["POST"])
+def request_call(request):
+    try:
+        data = json.loads(request.body)
+
+        caller_env_qs = Users.objects.filter(csrftoken=data['csrfToken'])
+        if caller_env_qs.first().total < 2:
+            return JsonResponse({'status': False, 'error': ''}, status=200)
+
+        callee_env_qs = Users.objects.filter(nickname=data['to_nickname'])
+        to_csrftoken = callee_env_qs.first().csrftoken
+
+        session_uuid = uuid.uuid4().hex
+        Calls.objects.create(from_csrftoken=data['csrfToken'], to_csrftoken=to_csrftoken, session_uuid=session_uuid)
+        caller_env_qs.update(total=caller_env_qs.first().total - 2)
+
+        info = {
+            'from_csrftoken': data['csrfToken'],
+            'to_csrftoken': to_csrftoken,
+            'session_uuid': session_uuid,
+            'caller_name': caller_env_qs.first().nickname,
+            'callee_name': data['to_nickname'],
+            'role': 'caller',
+            'exp': int(time.time()) + 60 * 5
+        }
+
+        token = jwt.encode(info, settings.SHARED_SECRET_KEY, algorithm="HS256")
+
+        return JsonResponse({'status': True, 'token': token}, status=201)
 
     except Exception as e:
         return JsonResponse({'status': False, 'error': str(e)}, status=500)

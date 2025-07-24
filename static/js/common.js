@@ -19,11 +19,21 @@ async function FetchData(path, body) {
     return await response.json();
 }
 
-function showToast(state, tip) {
+function showToast(toast, state, tip) {
     document.getElementById('toastIcon').innerHTML = state ? '<i class="fa-solid fa-circle-check fa-lg" style="color: green;"></i>' :
         '<i class="fa-solid fa-circle-xmark fa-lg" style="color: red;"></i>';
     document.getElementById('toastText').innerHTML = tip;
     toast.show();
+}
+
+function open_page(url) {
+    const link = document.createElement('a');
+    link.href = url;
+    link.target = '_self';
+    link.rel = 'noopener noreferrer';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 }
 
 document.addEventListener('DOMContentLoaded', () => {

@@ -7,7 +7,7 @@ async function modify() {
         id: currentId
     });
 
-    showToast(response.status, response.status ? '操作成功！' :
+    showToast(toast, response.status, response.status ? '操作成功！' :
         `操作遇到错误，错误信息：<br>${response.error}<br>请联系站长解决。`);
 
     if (response.status) {
@@ -42,18 +42,18 @@ async function release_env() {
     const word = document.getElementById('word').value;
 
     if (balance < total) {
-        showToast(false, '余额不足！')
+        showToast(toast, false, '余额不足！')
         return
     }
 
     const response = await FetchData(`//${window.location.host}/api/release_envelope`,{
-        csrfToken: "{{ csrfToken }}",
+        csrfToken: csrfToken,
         total: total,
         total_people: total_people,
         word: word
     });
 
-    showToast(response.status, response.status ? '操作成功！' :
+    showToast(toast, response.status, response.status ? '操作成功！' :
         `操作遇到错误，错误信息：<br>${response.error}<br>请联系站长解决。`);
 
     if (response.status) {
@@ -127,19 +127,12 @@ async function changeType(id) {
     title.textContent = envs_data[id].name;
 }
 
-function showToast(state, tip) {
-    document.getElementById('toastIcon').innerHTML = state ? '<i class="fa-solid fa-circle-check fa-lg" style="color: green;"></i>' :
-        '<i class="fa-solid fa-circle-xmark fa-lg" style="color: red;"></i>';
-    document.getElementById('toastText').innerHTML = tip;
-    toast.show();
-}
-
 async function claimRedPacket() {
     const open_button = document.getElementById('open-btn');
     const spinner = document.getElementById('spinner-container');
     const tip = document.getElementById('tip');
     const close = document.getElementById('btn-close');
-    const btn_complete = document.getElementById('btn-complete');
+    const env_btn_complete = document.getElementById('Env-btn-complete');
     const EnvModal = new bootstrap.Modal(document.getElementById('EnvModal'));
 
     const env_money = envs_data[currentId].amount;
@@ -152,7 +145,7 @@ async function claimRedPacket() {
     const recv_env_money_resp = await FetchData(`//${window.location.host}/api/get_recv_money`, {id: currentId});
 
     if (!recv_env_money_resp.status) {
-        showToast(false, `操作遇到错误，错误信息：<br>${recv_env_money_resp.error}<br>请联系站长解决。`);
+        showToast(toast, false, `操作遇到错误，错误信息：<br>${recv_env_money_resp.error}<br>请联系站长解决。`);
         open_button.style.display = "";
         spinner.style.display = "none";
         return;
@@ -163,7 +156,7 @@ async function claimRedPacket() {
     open_button.style.display = "";
     spinner.style.display = "none";
     close.disabled = true;
-    btn_complete.disabled = true;
+    env_btn_complete.disabled = true;
 
     EnvModal.show();
 
@@ -174,7 +167,7 @@ async function claimRedPacket() {
     tip.textContent = recv_env_money_resp.amount;
 
     close.disabled = false;
-    btn_complete.disabled = false;
+    env_btn_complete.disabled = false;
 }
 
 let isFinished;
@@ -192,7 +185,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     document.querySelectorAll('.modal').forEach(modal => {
         modal.addEventListener('hidden.bs.modal', function () {
-            if (!isFinished) showToast(false, '操作已取消。');
+            if (!isFinished) showToast(toast, false, '操作已取消。');
             isFinished = false;
         });
     });
@@ -221,7 +214,6 @@ document.addEventListener('DOMContentLoaded', function() {
         let value = e.target.value;
         if (value === '') return;
 
-        // 补全两位小数（如将"5"转为"5.00"，"5.1"转为"5.10"）
         if (!value.includes('.')) {
             value += '.00';
         } else {
@@ -251,7 +243,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     document.querySelectorAll('.required').forEach(element => {
-        element.addEventListener('input', checkFormValidity);  // 适用于输入框和文本框
+        element.addEventListener('input', checkFormValidity);
     });
 
     isFinished = false;
