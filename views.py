@@ -44,22 +44,28 @@ def password(request):
 
 def homepage(request):
     check_secure(request)
-
     try:
-        csrftoken = request.COOKIES['csrftoken']
-    except KeyError as ke:  # 有时候cookies中不会夹带csrftoken键，很奇怪。此时强制刷新即可。
-        print(ke)
-        return redirect('/chat/')
+        try:
+            csrftoken = request.COOKIES['csrftoken']
+        except KeyError as ke:  # 有时候cookies中不会夹带csrftoken键，很奇怪。此时强制刷新即可。
+            print(ke)
+            return redirect('/chat/')
 
-    if not request.session.get('is_authenticated', False):
-        return redirect('/')
+        # if not request.session.get('is_authenticated', False):
+            # return redirect('/')
 
-    request.session.set_expiry(0)
-    return render(request, 'chat_base.html', {
-        'csrfToken': csrftoken,
-        'input_nickname': not Users.objects.filter(csrftoken=csrftoken).first(),
-        'users': Users.objects.all()
-    })
+        request.session.set_expiry(0)
+
+        input_nickname = not Users.objects.filter(csrftoken=csrftoken).first()
+
+        return render(request, 'chat_base.html', {
+            'csrfToken': csrftoken,
+            'input_nickname': input_nickname,
+            'users': Users.objects.all(),
+            'nickname': '' if input_nickname else Users.objects.filter(csrftoken=csrftoken).first().nickname
+        })
+    except Exception as e:
+        return HttpResponse(e)
 
 
 def generate_floats(n, total):
