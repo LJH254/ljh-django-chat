@@ -86,8 +86,8 @@ def envelope(request):
         print(ke)
         return redirect('/envelope/')
 
-    if not request.session.get('is_authenticated', False):
-        return redirect('/')
+    # if not request.session.get('is_authenticated', False):
+        # return redirect('/')
 
     user_env_qs = Users.objects.filter(csrftoken=csrftoken).first()
     public_env_qs = PublicEnvelope.objects.all()

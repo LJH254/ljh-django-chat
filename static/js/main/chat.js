@@ -134,9 +134,14 @@ async function m_nickname() {
         csrfToken: csrfToken,
         nickname: nickname
     });
-    if (!response.status) showToast(toast, response.status,
-        `操作遇到错误，错误信息：<br>${response.error}<br>请联系站长解决。`
-    );
+
+    if (!response.status) {
+        showToast(toast, response.status,
+            `操作遇到错误，错误信息：<br>${response.error}<br>请联系站长解决。`
+        );
+    } else {
+        document.getElementById('nickname').textContent = nickname;
+    }
 }
 
 async function requestCall() {
