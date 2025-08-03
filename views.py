@@ -10,14 +10,7 @@ import jwt
 import time
 
 
-def check_secure(request):
-    if not request.is_secure():
-        return redirect(f"https://{request.get_host()}{request.path}", permanent=True)
-
-
 def password(request):
-    check_secure(request)
-
     if request.session.get('is_authenticated', False):
         return redirect('/chat/')
 
@@ -43,29 +36,25 @@ def password(request):
 
 
 def homepage(request):
-    check_secure(request)
     try:
-        try:
-            csrftoken = request.COOKIES['csrftoken']
-        except KeyError as ke:  # 有时候cookies中不会夹带csrftoken键，很奇怪。此时强制刷新即可。
-            print(ke)
-            return redirect('/chat/')
+        csrftoken = request.COOKIES['csrftoken']
+    except KeyError as ke:  # 有时候cookies中不会夹带csrftoken键，很奇怪。此时强制刷新即可。
+        print(ke)
+        return redirect('/chat/')
 
-        # if not request.session.get('is_authenticated', False):
-            # return redirect('/')
+    # if not request.session.get('is_authenticated', False):
+        # return redirect('/')
 
-        request.session.set_expiry(0)
+    request.session.set_expiry(0)
 
-        input_nickname = not Users.objects.filter(csrftoken=csrftoken).first()
+    input_nickname = not Users.objects.filter(csrftoken=csrftoken).first()
 
-        return render(request, 'chat_base.html', {
-            'csrfToken': csrftoken,
-            'input_nickname': input_nickname,
-            'users': Users.objects.all(),
-            'nickname': '' if input_nickname else Users.objects.filter(csrftoken=csrftoken).first().nickname
-        })
-    except Exception as e:
-        return HttpResponse(e)
+    return render(request, 'chat_base.html', {
+        'csrfToken': csrftoken,
+        'input_nickname': input_nickname,
+        'users': Users.objects.all(),
+        'nickname': '' if input_nickname else Users.objects.filter(csrftoken=csrftoken).first().nickname
+    })
 
 
 def generate_floats(n, total):
@@ -78,16 +67,14 @@ def generate_floats(n, total):
 
 
 def envelope(request):
-    check_secure(request)
-
     try:
         csrftoken = request.COOKIES['csrftoken']
     except KeyError as ke:  # 有时候cookies中不会夹带csrftoken键，很奇怪。此时强制刷新即可。
         print(ke)
         return redirect('/envelope/')
 
-    if not request.session.get('is_authenticated', False):
-        return redirect('/')
+    # if not request.session.get('is_authenticated', False):
+        # return redirect('/')
 
     user_env_qs = Users.objects.filter(csrftoken=csrftoken).first()
     public_env_qs = PublicEnvelope.objects.all()

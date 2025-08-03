@@ -1,8 +1,7 @@
 from channels.generic.websocket import AsyncWebsocketConsumer
 import json
+from channels.db import database_sync_to_async
 from urllib.parse import parse_qs
-
-chat_history = []
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
@@ -10,14 +9,19 @@ class ChatConsumer(AsyncWebsocketConsumer):
         self.room_name = 'default'
         self.room_group_name = f'chat_{self.room_name}'
 
+        from .models import Message
+        self.message_model = Message
+
         await self.channel_layer.group_add(
             self.room_group_name,
             self.channel_name
         )
         await self.accept()
 
-        for msg_list in chat_history:
-            m = json.dumps({"csrf_token": msg_list[0], "message": msg_list[1]})
+        messages = await self.get_messages()
+
+        for msg in messages:
+            m = json.dumps({"csrf_token": msg.csrftoken, "message": msg.message})
             await self.send(m)
 
     async def disconnect(self, close_code):
@@ -31,7 +35,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         message = text_data_json['message']
         csrftoken = text_data_json['csrfToken']
 
-        chat_history.append([csrftoken, message])
+        await self.create_message(csrftoken, message)
 
         await self.channel_layer.group_send(
             self.room_group_name,
@@ -54,6 +58,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
             'csrf_token': csrftoken,
             'message': message
         }))
+
+    @database_sync_to_async
+    def create_message(self, csrftoken, message):
+        return self.message_model.objects.create(csrftoken=csrftoken, message=message)
+
+    @database_sync_to_async
+    def get_messages(self):
+        return list(self.message_model.objects.order_by('created_at'))
 
 
 calls = {}

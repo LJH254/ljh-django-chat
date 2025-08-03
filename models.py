@@ -25,3 +25,11 @@ class Calls(models.Model):
     from_csrftoken = models.CharField(verbose_name='CSRF令牌', max_length=50)
     to_csrftoken = models.CharField(verbose_name='CSRF令牌', max_length=50)
     session_uuid = models.CharField(verbose_name='UUID', default='', max_length=50)
+
+class Message(models.Model):
+    csrftoken = models.CharField(verbose_name='CSRF令牌', max_length=50)
+    message = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.message
